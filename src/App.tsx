@@ -21,8 +21,14 @@ const App = () => (
         <StudentProvider>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/category/:id" element={<AppShell><CategoryDetail /></AppShell>} />
-            <Route path="/preview/:categoryId" element={<AppShell><Preview /></AppShell>} />
+            <Route
+              path="/category/:id"
+              element={<AppShell><CategoryDetail /></AppShell>}
+            />
+            <Route
+              path="/preview/:categoryId"
+              element={<AppShell><Preview /></AppShell>}
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </StudentProvider>
