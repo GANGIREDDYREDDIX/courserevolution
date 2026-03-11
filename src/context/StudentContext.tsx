@@ -56,7 +56,18 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const current = prev[categoryId] || { selectedCourseIds: [], status: "not_started" };
       if (current.status === "finalized") return prev;
 
-      const ids = current.selectedCourseIds.includes(courseId)
+      const cat = mockCategories.find((c) => c.id === categoryId);
+      const isRemoving = current.selectedCourseIds.includes(courseId);
+
+      if (!isRemoving && cat) {
+        const course = cat.courses.find((c) => c.id === courseId);
+        const currentCredits = cat.courses
+          .filter((c) => current.selectedCourseIds.includes(c.id))
+          .reduce((sum, c) => sum + c.credits, 0);
+        if (course && currentCredits + course.credits > cat.maxCredits) return prev;
+      }
+
+      const ids = isRemoving
         ? current.selectedCourseIds.filter((id) => id !== courseId)
         : [...current.selectedCourseIds, courseId];
 

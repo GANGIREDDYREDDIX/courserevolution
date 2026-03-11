@@ -51,7 +51,8 @@ const CategoryDetail = () => {
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
         {category.courses.map((course) => {
           const isSelected = sel.includes(course.id);
-          const isDisabled = isFinalized || (!isSelected && capReached);
+          const wouldExceed = creditsUsed + course.credits > category.maxCredits;
+          const isDisabled = isFinalized || (!isSelected && wouldExceed);
 
           return (
             <label
