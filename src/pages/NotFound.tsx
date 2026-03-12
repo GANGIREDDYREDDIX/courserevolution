@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { GraduationCap } from "lucide-react";
 
@@ -17,12 +17,12 @@ const NotFound = () => {
         </div>
         <h1 className="mb-2 text-6xl font-extrabold text-gradient">404</h1>
         <p className="mb-6 text-lg text-muted-foreground">This page doesn't exist</p>
-        <a
-          href="/"
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-gradient-to-r from-primary to-amber-500 text-white text-sm font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
         >
           Return to Home
-        </a>
+        </Link>
       </div>
     </div>
   );

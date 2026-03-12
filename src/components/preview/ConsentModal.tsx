@@ -5,9 +5,23 @@ interface ConsentModalProps {
   open: boolean;
   onCancel: () => void;
   onConfirm: () => void;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  cancelLabel?: string;
+  confirmLabel?: string;
 }
 
-const ConsentModal = ({ open, onCancel, onConfirm }: ConsentModalProps) => {
+const ConsentModal = ({
+  open,
+  onCancel,
+  onConfirm,
+  title = "Finalize Selection?",
+  subtitle = "This action cannot be undone",
+  description = 'This action is <strong class="text-foreground">permanent</strong>. Once finalized, your course selection for this category cannot be modified. Please ensure all selections are correct.',
+  cancelLabel = "Go Back",
+  confirmLabel = "I Understand, Finalize",
+}: ConsentModalProps) => {
   return (
     <AnimatePresence>
       {open && (
@@ -31,27 +45,27 @@ const ConsentModal = ({ open, onCancel, onConfirm }: ConsentModalProps) => {
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-foreground">Finalize Selection?</h2>
-                <p className="text-xs text-muted-foreground">This action cannot be undone</p>
+                <h2 className="text-lg font-bold text-foreground">{title}</h2>
+                <p className="text-xs text-muted-foreground">{subtitle}</p>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mb-7 leading-relaxed">
-              This action is <strong className="text-foreground">permanent</strong>. Once finalized, your course selection for this category
-              cannot be modified. Please ensure all selections are correct.
-            </p>
+            <p
+              className="text-sm text-muted-foreground mb-7 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
             <div className="flex gap-3 justify-end">
               <button
                 onClick={onCancel}
                 className="h-11 px-5 rounded-xl bg-secondary text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
               >
-                Go Back
+                {cancelLabel}
               </button>
               <button
                 onClick={onConfirm}
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-gradient-to-r from-primary to-amber-500 text-white text-sm font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
               >
                 <Shield className="w-4 h-4" />
-                I Understand, Finalize
+                {confirmLabel}
               </button>
             </div>
           </motion.div>

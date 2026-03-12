@@ -52,7 +52,17 @@ const CategoryDetail = () => {
   const { student, categories, selections, toggleCourse, getCreditsUsed, getStatus } = useStudent();
 
   const category = categories.find((c) => c.id === id);
-  if (!category) return <div className="py-20 text-center text-muted-foreground">Category not found.</div>;
+  if (!category) return (
+    <div className="py-20 text-center">
+      <p className="text-muted-foreground mb-4">Category not found.</p>
+      <button
+        onClick={() => navigate("/")}
+        className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+      >
+        Back to Home
+      </button>
+    </div>
+  );
 
   const status = getStatus(category.id);
   const creditsUsed = getCreditsUsed(category.id);

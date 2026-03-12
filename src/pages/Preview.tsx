@@ -29,7 +29,17 @@ const Preview = () => {
     return Array.from(grouped.entries()).sort(([a], [b]) => a - b);
   }, [selectedCourses]);
 
-  if (!category) return <div className="py-20 text-center text-muted-foreground">Category not found.</div>;
+  if (!category) return (
+    <div className="py-20 text-center">
+      <p className="text-muted-foreground mb-4">Category not found.</p>
+      <button
+        onClick={() => navigate("/")}
+        className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+      >
+        Back to Home
+      </button>
+    </div>
+  );
 
   return (
     <div className="py-8 max-w-2xl mx-auto animate-fade-in">
@@ -104,6 +114,11 @@ const Preview = () => {
           setShowConsent(false);
           navigate(`/edurev/${categoryId}`);
         }}
+        title="Proceed to Edu Rev Options?"
+        subtitle="Review your selections before continuing"
+        description='You are about to set up <strong class="text-foreground">Edu Rev benefits</strong> for your selected courses. You can still come back to modify your course selections before final submission.'
+        cancelLabel="Go Back"
+        confirmLabel="Yes, Proceed"
       />
     </div>
   );

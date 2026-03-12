@@ -45,11 +45,13 @@ const AchievementForm = ({
 
     if (file.size > MAX_FILE_SIZE) {
       setFileError("File size must be less than 10MB");
+      e.currentTarget.value = "";
       return;
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       setFileError("Please upload a PDF, image, or Word document");
+      e.currentTarget.value = "";
       return;
     }
 

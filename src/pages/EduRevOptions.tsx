@@ -9,6 +9,7 @@ import UndertakingModal from "@/components/edurev/UndertakingModal";
 import ConsentModal from "@/components/preview/ConsentModal";
 import { EDU_REV_OPTIONS, COMPLETED_TERM_ALLOWED_OPTIONS, type EduRevOptionType, type Achievement } from "@/data/eduRevTypes";
 import { ChevronLeft, ChevronRight, BookOpen, Info } from "lucide-react";
+import { toast } from "sonner";
 
 const EduRevOptionsPage = () => {
   const { id: categoryId } = useParams<{ id: string }>();
@@ -29,6 +30,9 @@ const EduRevOptionsPage = () => {
   // Redirect if no courses selected
   useEffect(() => {
     if (!category || selectedCourseIds.length === 0) {
+      toast.error("No courses selected", {
+        description: "Please select courses before setting up Edu Rev options.",
+      });
       navigate("/");
     }
   }, [category, selectedCourseIds, navigate]);
@@ -301,13 +305,15 @@ const EduRevOptionsPage = () => {
           onCancel={() => setShowUndertaking(false)}
         />
 
-        {/* Consent / Finalize Modal */}
         <ConsentModal
           open={showConsent}
           onCancel={() => setShowConsent(false)}
           onConfirm={() => {
             finalizeCategory(categoryId!);
             setShowConsent(false);
+            toast.success("Category finalized!", {
+              description: "Your course selections and Edu Rev benefits have been locked in.",
+            });
             navigate("/");
           }}
         />
