@@ -25,9 +25,17 @@ const StudentHero = () => {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0"
+          className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0 overflow-hidden"
         >
-          <span className="text-xl font-bold text-primary">{initials}</span>
+          {student.avatarUrl ? (
+            <img 
+              src={student.avatarUrl} 
+              alt={student.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-xl font-bold text-primary">{initials}</span>
+          )}
         </motion.div>
 
         {/* Info */}
