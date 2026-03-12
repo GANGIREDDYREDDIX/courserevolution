@@ -116,9 +116,13 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
           <h3 className="text-sm font-semibold tracking-tight text-foreground leading-snug">
             {category.name}
           </h3>
-          {category.isElective && (
+          {category.isElective ? (
             <span className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-md">
               Elective
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
+              Mandatory
             </span>
           )}
         </div>
