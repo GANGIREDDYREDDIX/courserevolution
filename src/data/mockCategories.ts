@@ -144,9 +144,9 @@ export const mockCategories: Category[] = [
     ],
   },
 
-  /* ── 10. Summer Training (TCS) ── 1 course · 3 credits ── */
+  /* ── 10. Summer Training (ICS) ── 1 course · 3 credits ── */
   {
-    id: "cat-10", name: "Summer Training", code: "TCS", colorKey: "gold", maxCredits: 3,
+    id: "cat-10", name: "Summer Training", code: "ICS", colorKey: "gold", maxCredits: 3,
     courses: [
       c("tcs-1","cat-10","Summer Industrial Training","CSE408",3,5,0,0,6),
     ],

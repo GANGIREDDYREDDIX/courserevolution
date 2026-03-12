@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import CreditMeter from "@/components/shared/CreditMeter";
 import ConsentModal from "@/components/preview/ConsentModal";
-import { ArrowLeft, ArrowRight, Shield } from "lucide-react";
+import { ArrowLeft, ArrowRight, Shield, X, Edit } from "lucide-react";
 
 const Preview = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { categories, selections, getCreditsUsed } = useStudent();
+  const { categories, selections, getCreditsUsed, toggleCourse } = useStudent();
   const [showConsent, setShowConsent] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
 
   const category = categories.find((c) => c.id === categoryId);
   const selectedCourses = useMemo(() => {
@@ -68,8 +69,8 @@ const Preview = () => {
             </div>
           </div>
           {courses.map((course) => (
-            <div key={course.id} className="border-b border-border last:border-0">
-              <div className="flex items-center justify-between py-4 px-5">
+            <div key={course.id} className="border-b border-border last:border-0 group hover:bg-secondary/30 transition-colors">
+              <div className="flex items-center justify-between py-4 px-5 gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">{course.name}</p>
                   <div className="flex items-center gap-3 mt-1">
@@ -82,29 +83,48 @@ const Preview = () => {
                     </div>
                   </div>
                 </div>
-                <span className="font-mono text-sm font-bold text-foreground tabular-nums ml-4">{course.credits}</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm font-bold text-foreground tabular-nums">{course.credits}</span>
+                  <button
+                    onClick={() => toggleCourse(category.id, course.id)}
+                    className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Remove course"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       ))}
 
-      <div className="flex gap-3 justify-end mt-8">
+      <div className="flex gap-3 justify-between mt-8">
         <button
           onClick={() => navigate(`/category/${categoryId}`)}
-          className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-secondary text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
+          className="inline-flex items-center gap-2 h-10 px-5 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Category
+          <Edit className="w-4 h-4" />
+          Edit Selections
         </button>
-        <button
-          onClick={() => setShowConsent(true)}
-          disabled={selectedCourses.length === 0}
-          className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Proceed to Edu Rev Options
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        {!consentGiven ? (
+          <button
+            onClick={() => setShowConsent(true)}
+            disabled={selectedCourses.length === 0}
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Shield className="w-4 h-4" />
+            Confirm & Continue
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate(`/edurev-overview/${categoryId}`)}
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Explore Edu Rev Initiatives
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <ConsentModal
@@ -112,13 +132,13 @@ const Preview = () => {
         onCancel={() => setShowConsent(false)}
         onConfirm={() => {
           setShowConsent(false);
-          navigate(`/edurev/${categoryId}`);
+          setConsentGiven(true);
         }}
-        title="Proceed to Edu Rev Options?"
-        subtitle="Review your selections before continuing"
-        description='You are about to set up <strong class="text-foreground">Edu Rev benefits</strong> for your selected courses. You can still come back to modify your course selections before final submission.'
+        title="Confirm Your Course Selection"
+        subtitle="Please review and confirm"
+        description='By confirming, you acknowledge that you have reviewed your course selections and are ready to explore <strong class="text-foreground">Edu Rev initiatives</strong>. You can still edit your selections if needed.'
         cancelLabel="Go Back"
-        confirmLabel="Yes, Proceed"
+        confirmLabel="Confirm"
       />
     </div>
   );
