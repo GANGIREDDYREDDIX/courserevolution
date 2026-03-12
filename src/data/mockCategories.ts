@@ -18,6 +18,7 @@ export interface Category {
   colorKey: string;
   maxCredits: number;
   courses: Course[];
+  isElective?: boolean;
 }
 
 function getTermLabel(term: number): string {
@@ -88,7 +89,7 @@ export const mockCategories: Category[] = [
 
   /* ── 4. Engineering Minor — Cloud Computing (EM) ── 6 courses · 18 credits ── */
   {
-    id: "cat-4", name: "Engineering Minor", code: "EM", colorKey: "orange", maxCredits: 18,
+    id: "cat-4", name: "Engineering Minor", code: "EM", colorKey: "orange", maxCredits: 18, isElective: true,
     courses: [
       c("em-1","cat-4","Cloud Infrastructure & Services","INT330",3,4,2,0,2),
       c("em-2","cat-4","Cloud-Native Application Development","INT362",3,5,2,0,2),
@@ -101,7 +102,7 @@ export const mockCategories: Category[] = [
 
   /* ── 5. Open Minor (OEM) ── 4 courses · 9 credits ── */
   {
-    id: "cat-5", name: "Open Minor", code: "OEM", colorKey: "teal", maxCredits: 9,
+    id: "cat-5", name: "Open Minor", code: "OEM", colorKey: "teal", maxCredits: 9, isElective: true,
     courses: [
       c("oem-1","cat-5","Open Minor Elective I","—",2,5,2,0,0),
       c("oem-2","cat-5","Open Minor Elective II","—",2,6,2,0,0),
@@ -154,7 +155,7 @@ export const mockCategories: Category[] = [
 
   /* ── 11. Department Elective (DE) ── 1 course · 2 credits ── */
   {
-    id: "cat-11", name: "Department Elective", code: "DE", colorKey: "slate", maxCredits: 2,
+    id: "cat-11", name: "Department Elective", code: "DE", colorKey: "slate", maxCredits: 2, isElective: true,
     courses: [
       c("de-1","cat-11","Department Elective","CSE393",2,7,2,0,0),
     ],
@@ -170,7 +171,7 @@ export const mockCategories: Category[] = [
 
   /* ── 13. Aptitude Elective (EEA) ── 1 course · 3 credits ── */
   {
-    id: "cat-13", name: "Aptitude Elective", code: "EEA", colorKey: "rose", maxCredits: 3,
+    id: "cat-13", name: "Aptitude Elective", code: "EEA", colorKey: "rose", maxCredits: 3, isElective: true,
     courses: [
       c("eea-1","cat-13","Quantitative Aptitude & Reasoning","PEA306",3,5,3,0,0),
     ],
@@ -178,7 +179,7 @@ export const mockCategories: Category[] = [
 
   /* ── 14. Pathway Courses (PWE) ── 4 courses · 13 credits ── */
   {
-    id: "cat-14", name: "Pathway Courses", code: "PWE", colorKey: "lime", maxCredits: 13,
+    id: "cat-14", name: "Pathway Courses", code: "PWE", colorKey: "lime", maxCredits: 13, isElective: true,
     courses: [
       c("pwe-1","cat-14","Professional Enhancement Programme","PEA305",3,4,3,0,0),
       c("pwe-2","cat-14","Pathway Elective I — Cloud Architecture","CSE332",3,5,2,0,2),

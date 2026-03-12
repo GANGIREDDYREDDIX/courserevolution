@@ -76,9 +76,16 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
         </div>
 
         {/* Course info */}
-        <h3 className="text-sm font-semibold tracking-tight text-foreground leading-snug mb-1">
-          {category.name}
-        </h3>
+        <div className="mb-1 flex items-center gap-2">
+          <h3 className="text-sm font-semibold tracking-tight text-foreground leading-snug">
+            {category.name}
+          </h3>
+          {category.isElective && (
+            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full bg-amber-100 text-amber-700 border border-amber-300">
+              Elective
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground font-mono tracking-tight">
           {category.code} · {category.courses.length} courses
         </p>
