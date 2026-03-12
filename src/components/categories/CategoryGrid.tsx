@@ -11,10 +11,10 @@ const CategoryGrid = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-center justify-between mb-5"
+        className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gradient-to-r from-orange-300 to-blue-300"
       >
-        <h2 className="text-lg font-semibold text-foreground tracking-tight">Course Categories</h2>
-        <span className="text-xs text-muted-foreground font-mono">{categories.length} categories</span>
+        <h2 className="text-xl font-bold text-foreground tracking-tight bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">Course Categories</h2>
+        <span className="text-xs font-semibold text-white bg-gradient-to-r from-orange-500 to-blue-500 px-3 py-1.5 rounded-full shadow-md">{categories.length} categories</span>
       </motion.div>
       <motion.div 
         initial="hidden"

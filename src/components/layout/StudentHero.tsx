@@ -19,13 +19,13 @@ const StudentHero = () => {
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="py-8"
     >
-      <div className="bg-card rounded-2xl border border-border px-8 py-8 flex flex-col sm:flex-row items-center gap-6">
+      <div className="bg-gradient-to-br from-white via-orange-50/30 to-blue-50/30 rounded-2xl border-2 border-orange-200 shadow-lg px-8 py-8 flex flex-col sm:flex-row items-center gap-6">
         {/* Avatar */}
         <motion.div 
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0 overflow-hidden"
+          className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-4 border-white shadow-xl flex items-center justify-center shrink-0 overflow-hidden"
         >
           {student.avatarUrl ? (
             <img 

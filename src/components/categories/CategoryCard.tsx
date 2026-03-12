@@ -24,6 +24,40 @@ const bgMap: Record<string, string> = {
   lime: "bg-lime-50",
 };
 
+const gradientMap: Record<string, string> = {
+  purple: "from-purple-500/10 to-purple-600/5",
+  charcoal: "from-gray-500/10 to-gray-600/5",
+  blue: "from-blue-500/10 to-blue-600/5",
+  orange: "from-orange-500/10 to-orange-600/5",
+  red: "from-red-500/10 to-red-600/5",
+  yellow: "from-amber-500/10 to-amber-600/5",
+  navy: "from-indigo-500/10 to-indigo-700/5",
+  green: "from-emerald-500/10 to-emerald-600/5",
+  teal: "from-teal-500/10 to-teal-600/5",
+  gold: "from-amber-500/10 to-amber-600/5",
+  cyan: "from-cyan-500/10 to-cyan-600/5",
+  slate: "from-slate-500/10 to-slate-600/5",
+  rose: "from-rose-500/10 to-rose-600/5",
+  lime: "from-lime-500/10 to-lime-600/5",
+};
+
+const borderMap: Record<string, string> = {
+  purple: "border-purple-200",
+  charcoal: "border-gray-300",
+  blue: "border-blue-200",
+  orange: "border-orange-200",
+  red: "border-red-200",
+  yellow: "border-amber-200",
+  navy: "border-indigo-300",
+  green: "border-emerald-200",
+  teal: "border-teal-200",
+  gold: "border-amber-200",
+  cyan: "border-cyan-200",
+  slate: "border-slate-300",
+  rose: "border-rose-200",
+  lime: "border-lime-200",
+};
+
 const textMap: Record<string, string> = {
   purple: "text-purple-600",
   charcoal: "text-gray-600",
@@ -52,6 +86,8 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
   const status = getStatus(category.id);
   const creditsUsed = getCreditsUsed(category.id);
   const isFinalized = status === "finalized";
+  const gradient = gradientMap[category.colorKey] || gradientMap.blue;
+  const borderColor = borderMap[category.colorKey] || borderMap.blue;
 
   return (
     <motion.button
@@ -61,13 +97,13 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="relative group w-full text-left bg-card rounded-lg overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-all duration-200 border border-border hover:border-primary/30 hover:shadow-card-hover"
+      className={`relative group w-full text-left bg-gradient-to-br ${gradient} rounded-xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-all duration-200 border-2 ${borderColor} hover:shadow-lg`}
     >
       <div className="p-5">
         {/* Top row: icon + status */}
         <div className="flex items-start justify-between mb-4">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${bgMap[category.colorKey]}`}>
-            <Icon className={`w-5 h-5 ${textMap[category.colorKey]}`} />
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white shadow-sm border-2 ${borderColor}`}>
+            <Icon className={`w-6 h-6 ${textMap[category.colorKey]}`} />
           </div>
           <div className="flex items-center gap-1.5">
             {isFinalized && <Lock className="w-3 h-3 text-emerald-600" />}
@@ -81,7 +117,7 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
             {category.name}
           </h3>
           {category.isElective && (
-            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full bg-amber-100 text-amber-700 border border-amber-300">
+            <span className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-md">
               Elective
             </span>
           )}
