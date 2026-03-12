@@ -3,7 +3,8 @@ import { useStudent } from "@/context/StudentContext";
 import { categoryIcons } from "@/data/categoryIcons";
 import StatusChip from "@/components/shared/StatusChip";
 import { motion } from "framer-motion";
-import { Lock, ArrowRight, MapPin, CheckCircle2, Circle } from "lucide-react";
+import { Lock, ArrowRight, MapPin, CheckCircle2, Circle, Info } from "lucide-react";
+import { COMPLETED_TERM_ALLOWED_OPTIONS, EDU_REV_OPTIONS } from "@/data/eduRevTypes";
 import {
   Accordion,
   AccordionContent,
@@ -164,7 +165,7 @@ const CategoryDetail = () => {
                       <Circle className="w-4 h-4 text-muted-foreground" />
                     )}
                   </div>
-                  <div className={isTermCompleted ? "opacity-60" : ""}>
+                  <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-foreground">Term {term}</span>
                       {isTermCurrent && (
@@ -176,7 +177,7 @@ const CategoryDetail = () => {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 text-left">
                       {isTermCompleted
-                        ? `Completed \u00B7 ${courses.length} Courses \u00B7 ${termCredits} Credits`
+                        ? `Completed \u00B7 ${courses.length} Courses \u00B7 ${termSelectedCredits > 0 ? `${termSelectedCredits} Credits Selected` : `${termCredits} Credits`}`
                         : isTermCurrent
                         ? `Selection in Progress \u00B7 ${termSelectedCredits} of ${category.maxCredits} Credits Selected`
                         : `${courses.length} Courses \u00B7 ${termCredits} Credits`
@@ -186,11 +187,20 @@ const CategoryDetail = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pb-0">
+                {isTermCompleted && (
+                  <div className="mx-4 mt-3 flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-50 text-amber-800 text-xs border border-amber-200">
+                    <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      Completed-term courses are eligible only for:{" "}
+                      <strong>{COMPLETED_TERM_ALLOWED_OPTIONS.map(t => EDU_REV_OPTIONS[t].label).join(", ")}</strong>
+                    </span>
+                  </div>
+                )}
                 <div className="border-t border-border p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {courses.map((course) => {
                     const isSelected = sel.includes(course.id);
                     const wouldExceed = creditsUsed + course.credits > category.maxCredits;
-                    const isDisabled = isFinalized || isTermCompleted || (!isSelected && wouldExceed);
+                    const isDisabled = isFinalized || (!isSelected && wouldExceed);
 
                     return (
                       <label
@@ -253,10 +263,10 @@ const CategoryDetail = () => {
       {!isFinalized && sel.length > 0 && (
         <div className="mt-8 flex gap-3 justify-end">
           <button
-            onClick={() => navigate(`/edurev/${category.id}`)}
+            onClick={() => navigate(`/preview/${category.id}`)}
             className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
           >
-            Proceed to Edu Rev Options
+            Review Selected Courses
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

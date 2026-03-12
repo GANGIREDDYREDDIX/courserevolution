@@ -27,6 +27,17 @@ export interface EduRevSelection {
   updatedAt: string;
 }
 
+/**
+ * EduRev options allowed for courses from completed terms.
+ * Only these benefits can be applied when a student selects a course
+ * they have already completed in a prior term.
+ */
+export const COMPLETED_TERM_ALLOWED_OPTIONS: EduRevOptionType[] = [
+  "grade_upgrade",
+  "rpl",
+  "nptel_moocs",
+];
+
 export const EDU_REV_OPTIONS: Record<EduRevOptionType, { label: string; description: string; icon: string }> = {
   revenue_generation: {
     label: "Revenue Generation",

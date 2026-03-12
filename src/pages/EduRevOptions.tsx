@@ -6,13 +6,14 @@ import { Progress } from "@/components/ui/progress";
 import EduRevOptionCard from "@/components/edurev/EduRevOptionCard";
 import AchievementForm from "@/components/edurev/AchievementForm";
 import UndertakingModal from "@/components/edurev/UndertakingModal";
-import { EDU_REV_OPTIONS, type EduRevOptionType, type Achievement } from "@/data/eduRevTypes";
-import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import ConsentModal from "@/components/preview/ConsentModal";
+import { EDU_REV_OPTIONS, COMPLETED_TERM_ALLOWED_OPTIONS, type EduRevOptionType, type Achievement } from "@/data/eduRevTypes";
+import { ChevronLeft, ChevronRight, BookOpen, Info } from "lucide-react";
 
 const EduRevOptionsPage = () => {
   const { id: categoryId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { categories, selections, getEduRevSelection, setEduRevSelection } = useStudent();
+  const { categories, selections, getEduRevSelection, setEduRevSelection, finalizeCategory, student } = useStudent();
 
   const category = categories.find((c) => c.id === categoryId);
   const categorySelection = selections[categoryId];
@@ -23,6 +24,7 @@ const EduRevOptionsPage = () => {
   );
   const [currentCourseIndex, setCurrentCourseIndex] = useState(0);
   const [showUndertaking, setShowUndertaking] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
 
   // Redirect if no courses selected
   useEffect(() => {
@@ -35,13 +37,21 @@ const EduRevOptionsPage = () => {
 
   const currentCourseId = selectedCourseIds[currentCourseIndex];
   const currentCourse = category.courses.find((c) => c.id === currentCourseId);
+  const studentCurrentTerm = (student.year - 1) * 2 + student.term;
+  const isCompletedTermCourse = currentCourse ? currentCourse.term < studentCurrentTerm : false;
   const eduRevData = getEduRevSelection(currentCourseId);
 
   const optionType = eduRevData?.optionType || null;
   const achievement = eduRevData?.achievement || null;
 
+  // If the saved option is not allowed for this course (e.g. completed-term restriction), treat as unset
+  const effectiveOptionType =
+    optionType && isCompletedTermCourse && !COMPLETED_TERM_ALLOWED_OPTIONS.includes(optionType)
+      ? null
+      : optionType;
+
   const isFormComplete: boolean =
-    !!(optionType &&
+    !!(effectiveOptionType &&
     achievement?.title?.trim() &&
     achievement?.description?.trim() &&
     achievement?.documentFile);
@@ -206,8 +216,18 @@ const EduRevOptionsPage = () => {
           <p className="text-sm text-muted-foreground mb-5">
             Choose the specific advantage you want to apply for this course module.
           </p>
+          {isCompletedTermCourse && (
+            <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-amber-50 text-amber-800 text-sm border border-amber-200 mb-4">
+              <Info className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>
+                This course is from a completed term. Only select Edu Rev benefits are available.
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {(Object.entries(EDU_REV_OPTIONS) as Array<[EduRevOptionType, { label: string; description: string; icon: string }]>).map(
+            {(Object.entries(EDU_REV_OPTIONS) as Array<[EduRevOptionType, { label: string; description: string; icon: string }]>)
+              .filter(([type]) => !isCompletedTermCourse || COMPLETED_TERM_ALLOWED_OPTIONS.includes(type))
+              .map(
               ([type, { label, description, icon }]) => (
                 <EduRevOptionCard
                   key={type}
@@ -215,7 +235,7 @@ const EduRevOptionsPage = () => {
                   label={label}
                   description={description}
                   icon={icon}
-                  isSelected={optionType === type}
+                  isSelected={effectiveOptionType === type}
                   onClick={() => handleOptionSelection(type)}
                 />
               )
@@ -224,7 +244,7 @@ const EduRevOptionsPage = () => {
         </div>
 
         {/* Achievement Form */}
-        {optionType && (
+        {effectiveOptionType && (
           <div className="mb-8 bg-card rounded-xl border border-border p-6">
             <h2 className="text-base font-bold text-foreground mb-5">Achievement Details</h2>
             <AchievementForm
@@ -259,7 +279,7 @@ const EduRevOptionsPage = () => {
           >
             {currentCourseIndex === selectedCourseIds.length - 1 ? (
               <>
-                Go to Preview
+                Finalize
                 <ChevronRight className="w-4 h-4" />
               </>
             ) : (
@@ -276,9 +296,20 @@ const EduRevOptionsPage = () => {
           open={showUndertaking}
           onConfirm={() => {
             setShowUndertaking(false);
-            navigate(`/preview/${categoryId}`);
+            setShowConsent(true);
           }}
           onCancel={() => setShowUndertaking(false)}
+        />
+
+        {/* Consent / Finalize Modal */}
+        <ConsentModal
+          open={showConsent}
+          onCancel={() => setShowConsent(false)}
+          onConfirm={() => {
+            finalizeCategory(categoryId!);
+            setShowConsent(false);
+            navigate("/");
+          }}
         />
       </div>
     </div>
