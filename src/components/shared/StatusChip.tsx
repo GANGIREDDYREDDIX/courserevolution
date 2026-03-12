@@ -1,4 +1,5 @@
 import { type SelectionStatus } from "@/context/StudentContext";
+import { Circle, CheckCircle2 } from "lucide-react";
 
 interface StatusChipProps {
   status: SelectionStatus;
@@ -7,19 +8,28 @@ interface StatusChipProps {
 const StatusChip = ({ status }: StatusChipProps) => {
   if (status === "not_started") return null;
 
-  const styles: Record<string, string> = {
-    draft: "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20",
-    finalized: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
+  const config = {
+    draft: {
+      bg: "bg-amber-50 border-amber-200/60",
+      text: "text-amber-700",
+      icon: Circle,
+      label: "Draft",
+    },
+    finalized: {
+      bg: "bg-emerald-50 border-emerald-200/60",
+      text: "text-emerald-700",
+      icon: CheckCircle2,
+      label: "Finalized",
+    },
   };
 
-  const labels: Record<string, string> = {
-    draft: "Draft",
-    finalized: "Finalized",
-  };
+  const c = config[status];
+  const Icon = c.icon;
 
   return (
-    <span className={`inline-flex items-center h-5 px-2 rounded-md text-[11px] font-medium ${styles[status]}`}>
-      {labels[status]}
+    <span className={`inline-flex items-center gap-1 h-6 px-2 rounded-md text-[11px] font-semibold border ${c.bg} ${c.text}`}>
+      <Icon className="w-3 h-3" />
+      {c.label}
     </span>
   );
 };

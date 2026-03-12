@@ -11,8 +11,8 @@ export interface Student {
 
 export const mockStudent: Student = {
   id: "STU-2024-0891",
-  name: "Adaeze Okonkwo",
-  firstName: "Adaeze",
+  name: "Abir Mahanta",
+  firstName: "Abir",
   school: "Faculty of Computing & Informatics",
   program: "B.Sc Computer Science",
   year: 3,

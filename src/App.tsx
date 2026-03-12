@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { StudentProvider } from "@/context/StudentContext";
 import Home from "./pages/Home";
 import CategoryDetail from "./pages/CategoryDetail";
+import EduRevOptions from "./pages/EduRevOptions";
 import Preview from "./pages/Preview";
 import NotFound from "./pages/NotFound";
 import AppShell from "./components/layout/AppShell";
@@ -24,6 +25,10 @@ const App = () => (
             <Route
               path="/category/:id"
               element={<AppShell><CategoryDetail /></AppShell>}
+            />
+            <Route
+              path="/edurev/:id"
+              element={<AppShell><EduRevOptions /></AppShell>}
             />
             <Route
               path="/preview/:categoryId"

@@ -1,32 +1,46 @@
 import { useStudent } from "@/context/StudentContext";
-
-const greetingByHour = () => {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-};
+import { Building2, Calendar, Hash, GraduationCap } from "lucide-react";
 
 const StudentHero = () => {
   const { student } = useStudent();
 
+  const initials = student.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <section className="py-12 px-1">
-      <h1 className="text-3xl font-semibold tracking-[-0.02em] text-foreground text-balance">
-        {greetingByHour()}, {student.firstName}.
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Map your courses for this semester. Select courses by category and finalize when ready.
-      </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {[student.program, `Year ${student.year}`, `Semester ${student.term}`].map((label) => (
-          <span
-            key={label}
-            className="inline-flex items-center h-6 px-2.5 rounded-md bg-secondary text-xs font-medium text-muted-foreground"
-          >
-            {label}
-          </span>
-        ))}
+    <section className="py-8 animate-fade-in">
+      <div className="bg-card rounded-2xl border border-border px-8 py-8 flex flex-col sm:flex-row items-center gap-6">
+        {/* Avatar */}
+        <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0">
+          <span className="text-xl font-bold text-primary">{initials}</span>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0 text-center sm:text-left">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">{student.name}</h1>
+          <p className="text-sm text-muted-foreground mt-1 flex items-center justify-center sm:justify-start gap-1.5">
+            <GraduationCap className="w-4 h-4" />
+            {student.program}
+          </p>
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-1 mt-3 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Building2 className="w-4 h-4" />
+              {student.school}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" />
+              Year {student.year} &middot; Semester {student.term}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Hash className="w-4 h-4" />
+              {student.enrollmentId}
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );
