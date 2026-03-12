@@ -1,5 +1,6 @@
 import { useStudent } from "@/context/StudentContext";
 import { Building2, Calendar, Hash, GraduationCap } from "lucide-react";
+import { motion } from "framer-motion";
 
 const StudentHero = () => {
   const { student } = useStudent();
@@ -12,15 +13,30 @@ const StudentHero = () => {
     .toUpperCase();
 
   return (
-    <section className="py-8 animate-fade-in">
+    <motion.section 
+      initial={{ opacity: 0, y: -30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="py-8"
+    >
       <div className="bg-card rounded-2xl border border-border px-8 py-8 flex flex-col sm:flex-row items-center gap-6">
         {/* Avatar */}
-        <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0">
+        <motion.div 
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center shrink-0"
+        >
           <span className="text-xl font-bold text-primary">{initials}</span>
-        </div>
+        </motion.div>
 
         {/* Info */}
-        <div className="flex-1 min-w-0 text-center sm:text-left">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="flex-1 min-w-0 text-center sm:text-left"
+        >
           <h1 className="text-2xl font-bold text-foreground tracking-tight">{student.name}</h1>
           <p className="text-sm text-muted-foreground mt-1 flex items-center justify-center sm:justify-start gap-1.5">
             <GraduationCap className="w-4 h-4" />
@@ -40,9 +56,9 @@ const StudentHero = () => {
               {student.enrollmentId}
             </span>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

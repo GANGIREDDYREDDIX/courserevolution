@@ -1,22 +1,45 @@
 import { useStudent } from "@/context/StudentContext";
 import CategoryCard from "./CategoryCard";
+import { motion } from "framer-motion";
 
 const CategoryGrid = () => {
   const { categories } = useStudent();
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center justify-between mb-5"
+      >
         <h2 className="text-lg font-semibold text-foreground tracking-tight">Course Categories</h2>
         <span className="text-xs text-muted-foreground font-mono">{categories.length} categories</span>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {categories.map((cat, i) => (
-          <div key={cat.id} style={{ animationDelay: `${i * 50}ms` }} className="animate-fade-in">
+      </motion.div>
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={{
+          visible: {
+            transition: {
+              staggerChildren: 0.08
+            }
+          }
+        }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+      >
+        {categories.map((cat) => (
+          <motion.div 
+            key={cat.id}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 }
+            }}
+          >
             <CategoryCard category={cat} />
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 };

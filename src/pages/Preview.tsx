@@ -4,6 +4,7 @@ import { useStudent } from "@/context/StudentContext";
 import CreditMeter from "@/components/shared/CreditMeter";
 import ConsentModal from "@/components/preview/ConsentModal";
 import { ArrowLeft, ArrowRight, Shield, X, Edit } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Preview = () => {
   const { categoryId } = useParams<{ categoryId: string }>();

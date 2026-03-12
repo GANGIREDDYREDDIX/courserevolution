@@ -5,6 +5,7 @@ import CreditMeter from "@/components/shared/CreditMeter";
 import StatusChip from "@/components/shared/StatusChip";
 import type { Category } from "@/data/mockCategories";
 import { Lock, ArrowUpRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 const bgMap: Record<string, string> = {
   purple: "bg-purple-50",
@@ -53,8 +54,13 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
   const isFinalized = status === "finalized";
 
   return (
-    <button
+    <motion.button
       onClick={() => navigate(`/category/${category.id}`)}
+      whileHover={{ scale: 1.02, y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       className="relative group w-full text-left bg-card rounded-lg overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-all duration-200 border border-border hover:border-primary/30 hover:shadow-card-hover"
     >
       <div className="p-5">
@@ -87,7 +93,7 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
           <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
         </div>
       </div>
-    </button>
+    </motion.button>
   );
 };
 
