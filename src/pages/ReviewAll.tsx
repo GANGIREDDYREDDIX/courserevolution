@@ -1,13 +1,23 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 
 const ReviewAll = () => {
   const navigate = useNavigate();
   const { categories, selections, getCreditsUsed, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
 
   const allCategoriesSelected = areAllCategoriesSelected();
   const remaining = getUnselectedCategoryNames();
+
+  const toggleExpanded = (categoryId: string) => {
+    setExpandedCategoryIds((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
 
   if (!allCategoriesSelected) {
     return (
@@ -43,6 +53,9 @@ const ReviewAll = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {categories.map((category) => {
           const selectedCount = selections[category.id]?.selectedCourseIds?.length || 0;
+          const selectedCourseIds = selections[category.id]?.selectedCourseIds || [];
+          const selectedCourses = category.courses.filter((course) => selectedCourseIds.includes(course.id));
+          const isExpanded = expandedCategoryIds.includes(category.id);
           const usedCredits = getCreditsUsed(category.id);
 
           return (
@@ -71,6 +84,39 @@ const ReviewAll = () => {
                   {usedCredits} / {category.maxCredits} credits
                 </p>
               </div>
+
+              <div className="mt-3">
+                <button
+                  onClick={() => toggleExpanded(category.id)}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-semibold text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  {isExpanded ? (
+                    <>
+                      Hide Courses
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </>
+                  ) : (
+                    <>
+                      Check Courses
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-3 rounded-lg border border-border bg-secondary/20 p-3 space-y-2">
+                  {selectedCourses.map((course) => (
+                    <div key={course.id} className="flex items-center justify-between gap-3 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground truncate">{course.name}</p>
+                        <p className="font-mono text-muted-foreground">{course.courseCode}</p>
+                      </div>
+                      <span className="font-mono text-muted-foreground shrink-0">{course.credits} cr</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
