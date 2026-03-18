@@ -67,6 +67,7 @@ const CategoryDetail = () => {
   const status = getStatus(category.id);
   const creditsUsed = getCreditsUsed(category.id);
   const isFinalized = status === "finalized";
+  const isMandatoryCategory = !category.isElective;
   const sel = selections[category.id]?.selectedCourseIds || [];
   const Icon = categoryIcons[category.id];
   const colorText = textMap[category.colorKey] || textMap.blue;
@@ -138,6 +139,13 @@ const CategoryDetail = () => {
         <div className="flex items-center gap-2.5 mb-6 px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">
           <Lock className="w-4 h-4" />
           <span className="font-medium">This category has been finalized. Selections are locked.</span>
+        </div>
+      )}
+
+      {isMandatoryCategory && (
+        <div className="flex items-center gap-2.5 mb-6 px-4 py-3 rounded-lg bg-blue-50 text-blue-700 text-sm border border-blue-200">
+          <Info className="w-4 h-4" />
+          <span className="font-medium">This is a mandatory category. All courses are fixed and pre-selected.</span>
         </div>
       )}
 
@@ -214,7 +222,7 @@ const CategoryDetail = () => {
                   {courses.map((course) => {
                     const isSelected = sel.includes(course.id);
                     const wouldExceed = creditsUsed + course.credits > category.maxCredits;
-                    const isDisabled = isFinalized || (!isSelected && wouldExceed);
+                    const isDisabled = isMandatoryCategory || isFinalized || (!isSelected && wouldExceed);
 
                     return (
                       <label

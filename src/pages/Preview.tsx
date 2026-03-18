@@ -14,6 +14,7 @@ const Preview = () => {
   const [consentGiven, setConsentGiven] = useState(false);
 
   const category = categories.find((c) => c.id === categoryId);
+  const isMandatoryCategory = !!category && !category.isElective;
   const selectedCourses = useMemo(() => {
     if (!category) return [];
     const sel = selections[category.id]?.selectedCourseIds || [];
@@ -86,13 +87,15 @@ const Preview = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm font-bold text-foreground tabular-nums">{course.credits}</span>
-                  <button
-                    onClick={() => toggleCourse(category.id, course.id)}
-                    className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Remove course"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  {!isMandatoryCategory && (
+                    <button
+                      onClick={() => toggleCourse(category.id, course.id)}
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                      title="Remove course"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -106,7 +109,7 @@ const Preview = () => {
           className="inline-flex items-center gap-2 h-10 px-5 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
         >
           <Edit className="w-4 h-4" />
-          Edit Selections
+          {isMandatoryCategory ? "View Courses" : "Edit Selections"}
         </button>
         {!consentGiven ? (
           <button

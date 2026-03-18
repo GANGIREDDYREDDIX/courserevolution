@@ -31,12 +31,29 @@ const StudentContext = createContext<StudentContextValue | null>(null);
 const STORAGE_KEY = "course-mapper-selections";
 const EDU_REV_STORAGE_KEY = "course-mapper-edu-rev";
 
+function normalizeSelections(raw: Record<string, CategorySelection>): Record<string, CategorySelection> {
+  const normalized: Record<string, CategorySelection> = { ...raw };
+
+  for (const category of mockCategories) {
+    // Mandatory categories are fixed: all courses stay selected.
+    if (!category.isElective) {
+      const existing = raw[category.id];
+      normalized[category.id] = {
+        selectedCourseIds: category.courses.map((course) => course.id),
+        status: existing?.status === "finalized" ? "finalized" : "draft",
+      };
+    }
+  }
+
+  return normalized;
+}
+
 function loadSelections(): Record<string, CategorySelection> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) return normalizeSelections(JSON.parse(raw));
   } catch {}
-  return {};
+  return normalizeSelections({});
 }
 
 function loadEduRevSelections(): Record<string, EduRevSelection> {
@@ -50,6 +67,10 @@ function loadEduRevSelections(): Record<string, EduRevSelection> {
 export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selections, setSelections] = useState<Record<string, CategorySelection>>(loadSelections);
   const [eduRevSelections, setEduRevSelections] = useState<Record<string, EduRevSelection>>(loadEduRevSelections);
+
+  useEffect(() => {
+    setSelections((prev) => normalizeSelections(prev));
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selections));
@@ -81,6 +102,8 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (current.status === "finalized") return prev;
 
       const cat = mockCategories.find((c) => c.id === categoryId);
+      // Mandatory categories are fixed and cannot be changed.
+      if (cat && !cat.isElective) return prev;
       const isRemoving = current.selectedCourseIds.includes(courseId);
 
       if (!isRemoving && cat) {
