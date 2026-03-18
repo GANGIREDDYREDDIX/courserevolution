@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import CategoryDetail from "./pages/CategoryDetail";
 import EduRevOptions from "./pages/EduRevOptions";
 import EduRevOverview from "./pages/EduRevOverview";
+import ReviewAll from "./pages/ReviewAll";
 import Preview from "./pages/Preview";
 import NotFound from "./pages/NotFound";
 import AppShell from "./components/layout/AppShell";
@@ -32,7 +33,11 @@ const App = () => (
               element={<AppShell><Preview /></AppShell>}
             />
             <Route
-              path="/edurev-overview/:categoryId"
+              path="/review"
+              element={<AppShell><ReviewAll /></AppShell>}
+            />
+            <Route
+              path="/edurev-overview/:categoryId?"
               element={<AppShell><EduRevOverview /></AppShell>}
             />
             <Route

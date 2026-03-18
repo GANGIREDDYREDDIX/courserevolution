@@ -306,12 +306,14 @@ const EduRevOverview = () => {
   const { categories, selections, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
   const [selectedTerm, setSelectedTerm] = useState<number | null>(null);
 
-  const category = categories.find((c) => c.id === categoryId);
-  const selectedCourses = category 
+  const category = categoryId ? categories.find((c) => c.id === categoryId) : null;
+  const selectedCourses = category
     ? category.courses.filter((c) => selections[category.id]?.selectedCourseIds?.includes(c.id))
-    : [];
+    : categories.flatMap((cat) =>
+        cat.courses.filter((course) => selections[cat.id]?.selectedCourseIds?.includes(course.id))
+      );
 
-  if (!category) {
+  if (categoryId && !category) {
     return (
       <div className="py-20 text-center">
         <p className="text-muted-foreground mb-4">Category not found.</p>
@@ -327,6 +329,7 @@ const EduRevOverview = () => {
 
   const allCategoriesSelected = areAllCategoriesSelected();
   const remainingCategories = getUnselectedCategoryNames();
+  const proceedTarget = categoryId ? `/edurev/${categoryId}` : "/";
 
   if (!allCategoriesSelected) {
     return (
@@ -581,7 +584,7 @@ const EduRevOverview = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6 }}
-                onClick={() => navigate(`/edurev/${categoryId}`)}
+                onClick={() => navigate(proceedTarget)}
                 className="inline-flex items-center gap-3 h-12 px-8 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white text-base font-bold hover:shadow-xl hover:scale-105 transition-all"
               >
                 Proceed to Select Edu Rev Categories
@@ -593,7 +596,7 @@ const EduRevOverview = () => {
           <TermDetailView 
             term={selectedTerm} 
             onBack={() => setSelectedTerm(null)}
-            onProceed={() => navigate(`/edurev/${categoryId}`)}
+            onProceed={() => navigate(proceedTarget)}
           />
         )}
       </AnimatePresence>

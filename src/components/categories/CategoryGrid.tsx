@@ -1,9 +1,13 @@
 import { useStudent } from "@/context/StudentContext";
 import CategoryCard from "./CategoryCard";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
 const CategoryGrid = () => {
-  const { categories } = useStudent();
+  const navigate = useNavigate();
+  const { categories, areAllCategoriesSelected } = useStudent();
+  const allCategoriesSelected = areAllCategoriesSelected();
 
   return (
     <div>
@@ -40,6 +44,18 @@ const CategoryGrid = () => {
           </motion.div>
         ))}
       </motion.div>
+
+      {allCategoriesSelected && (
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={() => navigate("/review")}
+            className="inline-flex items-center gap-2 h-12 px-8 rounded-xl bg-primary text-white text-lg font-bold hover:bg-primary/90 transition-colors"
+          >
+            Review Selected Courses
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
