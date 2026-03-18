@@ -87,16 +87,57 @@ export const mockCategories: Category[] = [
     ],
   },
 
-  /* ── 4. Engineering Minor — Cloud Computing (EM) ── 6 courses · 18 credits ── */
+  /* ── 4. Engineering Minor — Multiple Pathways (EM) ── Select one pathway · 18 credits ── */
   {
     id: "cat-4", name: "Engineering Minor", code: "EM", colorKey: "orange", maxCredits: 18, isElective: true,
     courses: [
-      c("em-1","cat-4","Cloud Infrastructure & Services","INT330",3,4,2,0,2),
-      c("em-2","cat-4","Cloud-Native Application Development","INT362",3,5,2,0,2),
-      c("em-3","cat-4","Virtualization & Container Technology","INT363",3,5,2,0,2),
-      c("em-4","cat-4","DevOps Engineering","INT364",3,6,2,0,2),
-      c("em-5","cat-4","Cloud Security & Governance","INT327",3,6,2,0,2),
-      c("em-6","cat-4","Cloud Architecture & Design Patterns","INT328",3,7,2,0,2),
+      // Cloud Computing pathway
+      c("em-cloud-1","cat-4","Cloud Infrastructure & Services","INT330",3,4,2,0,2),
+      c("em-cloud-2","cat-4","Cloud-Native Application Development","INT362",3,5,2,0,2),
+      c("em-cloud-3","cat-4","Virtualization & Container Technology","INT363",3,5,2,0,2),
+      c("em-cloud-4","cat-4","DevOps Engineering","INT364",3,6,2,0,2),
+      c("em-cloud-5","cat-4","Cloud Security & Governance","INT327",3,6,2,0,2),
+      c("em-cloud-6","cat-4","Cloud Architecture & Design Patterns","INT328",3,7,2,0,2),
+
+      // Cyber Security pathway
+      c("em-cyber-1","cat-4","Cyber Security Fundamentals","CYS301",3,4,2,0,2),
+      c("em-cyber-2","cat-4","Ethical Hacking & Penetration Testing","CYS322",3,5,2,0,2),
+      c("em-cyber-3","cat-4","Network Security Engineering","CYS333",3,5,2,0,2),
+      c("em-cyber-4","cat-4","Application Security","CYS344",3,6,2,0,2),
+      c("em-cyber-5","cat-4","Digital Forensics","CYS355",3,6,2,0,2),
+      c("em-cyber-6","cat-4","Security Operations & Incident Response","CYS366",3,7,2,0,2),
+
+      // Data Science pathway
+      c("em-data-1","cat-4","Data Science Foundations","DST301",3,4,2,0,2),
+      c("em-data-2","cat-4","Data Wrangling & Visualization","DST312",3,5,2,0,2),
+      c("em-data-3","cat-4","Statistical Learning","DST323",3,5,2,0,2),
+      c("em-data-4","cat-4","Big Data Technologies","DST334",3,6,2,0,2),
+      c("em-data-5","cat-4","Data Mining","DST345",3,6,2,0,2),
+      c("em-data-6","cat-4","Business Analytics & Decision Science","DST356",3,7,2,0,2),
+
+      // Machine Learning pathway
+      c("em-ml-1","cat-4","Machine Learning Fundamentals","ML301",3,4,2,0,2),
+      c("em-ml-2","cat-4","Supervised Learning Techniques","ML312",3,5,2,0,2),
+      c("em-ml-3","cat-4","Deep Learning","ML323",3,5,2,0,2),
+      c("em-ml-4","cat-4","Natural Language Processing","ML334",3,6,2,0,2),
+      c("em-ml-5","cat-4","Computer Vision","ML345",3,6,2,0,2),
+      c("em-ml-6","cat-4","MLOps & Model Deployment","ML356",3,7,2,0,2),
+
+      // Quality Engineering and Test Automation pathway
+      c("em-qe-1","cat-4","Software Quality Engineering","QEA301",3,4,2,0,2),
+      c("em-qe-2","cat-4","Test Design Techniques","QEA312",3,5,2,0,2),
+      c("em-qe-3","cat-4","Automation Testing with Selenium","QEA323",3,5,2,0,2),
+      c("em-qe-4","cat-4","API Testing & Performance Testing","QEA334",3,6,2,0,2),
+      c("em-qe-5","cat-4","CI/CD for Test Automation","QEA345",3,6,2,0,2),
+      c("em-qe-6","cat-4","Quality Metrics & Process Improvement","QEA356",3,7,2,0,2),
+
+      // Full Stack Web Development pathway
+      c("em-fullstack-1","cat-4","Front-End Engineering","FSW301",3,4,2,0,2),
+      c("em-fullstack-2","cat-4","Back-End Development","FSW312",3,5,2,0,2),
+      c("em-fullstack-3","cat-4","Database Design for Web Apps","FSW323",3,5,2,0,2),
+      c("em-fullstack-4","cat-4","REST & GraphQL APIs","FSW334",3,6,2,0,2),
+      c("em-fullstack-5","cat-4","Web Security & Authentication","FSW345",3,6,2,0,2),
+      c("em-fullstack-6","cat-4","Scalable Full Stack Project","FSW356",3,7,2,0,2),
     ],
   },
 

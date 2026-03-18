@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { categoryIcons } from "@/data/categoryIcons";
@@ -46,10 +47,19 @@ const textMap: Record<string, string> = {
   lime: "text-lime-600",
 };
 
+const engineeringMinorPaths = [
+  { id: "em-cloud", label: "Cloud Computing", color: "from-blue-500 to-blue-600" },
+  { id: "em-cyber", label: "Cyber Security", color: "from-slate-700 to-slate-800" },
+  { id: "em-data", label: "Data Science", color: "from-indigo-500 to-indigo-600" },
+  { id: "em-ml", label: "Machine Learning", color: "from-purple-500 to-purple-600" },
+  { id: "em-qe", label: "Quality Engineering and Test Automation", color: "from-amber-500 to-amber-600" },
+  { id: "em-fullstack", label: "Full Stack Web Development", color: "from-teal-500 to-teal-600" },
+] as const;
+
 const CategoryDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { student, categories, selections, toggleCourse, getCreditsUsed, getStatus } = useStudent();
+  const { student, categories, selections, toggleCourse, setCategorySelectedCourses, getCreditsUsed, getStatus } = useStudent();
 
   const category = categories.find((c) => c.id === id);
   if (!category) return (
@@ -72,12 +82,33 @@ const CategoryDetail = () => {
   const Icon = categoryIcons[category.id];
   const colorText = textMap[category.colorKey] || textMap.blue;
   const colorBg = bgMap[category.colorKey] || bgMap.blue;
+  const isEngineeringMinor = category.id === "cat-4";
+
+  const detectedPathFromSelection = useMemo(() => {
+    if (!isEngineeringMinor || sel.length === 0) return null;
+    const found = engineeringMinorPaths.find((path) => sel.some((courseId) => courseId.startsWith(`${path.id}-`)));
+    return found?.id ?? null;
+  }, [isEngineeringMinor, sel]);
+
+  const [selectedMinorPath, setSelectedMinorPath] = useState<string>(detectedPathFromSelection || engineeringMinorPaths[0].id);
+
+  useEffect(() => {
+    if (!isEngineeringMinor) return;
+    if (detectedPathFromSelection) {
+      setSelectedMinorPath(detectedPathFromSelection);
+    }
+  }, [detectedPathFromSelection, isEngineeringMinor]);
 
   const studentCurrentTerm = (student.year - 1) * 2 + student.term;
 
+  const displayedCourses = useMemo(() => {
+    if (!isEngineeringMinor) return category.courses;
+    return category.courses.filter((course) => course.id.startsWith(`${selectedMinorPath}-`));
+  }, [category.courses, isEngineeringMinor, selectedMinorPath]);
+
   // Group courses by term
-  const coursesByTerm: Record<number, typeof category.courses> = {};
-  for (const course of category.courses) {
+  const coursesByTerm: Record<number, typeof displayedCourses> = {};
+  for (const course of displayedCourses) {
     (coursesByTerm[course.term] ||= []).push(course);
   }
   const termNumbers = Object.keys(coursesByTerm).map(Number).sort((a, b) => a - b);
@@ -94,6 +125,14 @@ const CategoryDetail = () => {
   const getTermSelectedCredits = (courses: typeof category.courses) =>
     courses.filter((c) => sel.includes(c.id)).reduce((sum, c) => sum + c.credits, 0);
 
+  const handlePathChange = (pathId: string) => {
+    if (!isEngineeringMinor || pathId === selectedMinorPath) return;
+
+    const keptIds = sel.filter((courseId) => courseId.startsWith(`${pathId}-`));
+    setCategorySelectedCourses(category.id, keptIds);
+    setSelectedMinorPath(pathId);
+  };
+
   return (
     <div className="py-8 max-w-3xl mx-auto animate-fade-in">
       {/* Header */}
@@ -108,7 +147,7 @@ const CategoryDetail = () => {
             <div>
               <h1 className="text-xl font-bold tracking-tight text-foreground">{category.name}</h1>
               <p className="text-sm text-muted-foreground font-mono tracking-tight mt-0.5">
-                {category.code} · {category.courses.length} courses · Max {category.maxCredits} credits
+                {category.code} · {isEngineeringMinor ? `${engineeringMinorPaths.length} pathways` : `${category.courses.length} courses`} · Max {category.maxCredits} credits
               </p>
             </div>
           </div>
@@ -134,6 +173,32 @@ const CategoryDetail = () => {
           {creditsUsed} / {category.maxCredits} Credits Selected
         </span>
       </div>
+
+      {isEngineeringMinor && (
+        <div className="mb-6">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">Engineering Minor Areas</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {engineeringMinorPaths.map((path) => {
+              const isActive = selectedMinorPath === path.id;
+              return (
+                <button
+                  key={path.id}
+                  type="button"
+                  onClick={() => handlePathChange(path.id)}
+                  className={`rounded-xl p-4 text-left border-2 transition-all text-white bg-gradient-to-r ${path.color} ${
+                    isActive ? "ring-2 ring-primary/40 scale-[1.01]" : "opacity-90 hover:opacity-100"
+                  }`}
+                >
+                  <div className="text-sm font-bold tracking-wide uppercase">{path.label}</div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Select one pathway. Only courses from the selected pathway are shown below.
+          </p>
+        </div>
+      )}
 
       {isFinalized && (
         <div className="flex items-center gap-2.5 mb-6 px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">

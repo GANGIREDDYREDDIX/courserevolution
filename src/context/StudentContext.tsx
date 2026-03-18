@@ -16,6 +16,7 @@ interface StudentContextValue {
   selections: Record<string, CategorySelection>;
   eduRevSelections: Record<string, EduRevSelection>; // courseId -> EduRevSelection
   toggleCourse: (categoryId: string, courseId: string) => void;
+  setCategorySelectedCourses: (categoryId: string, courseIds: string[]) => void;
   getCreditsUsed: (categoryId: string) => number;
   finalizeCategory: (categoryId: string) => void;
   getStatus: (categoryId: string) => SelectionStatus;
@@ -133,6 +134,44 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const setCategorySelectedCourses = (categoryId: string, courseIds: string[]) => {
+    const cat = mockCategories.find((c) => c.id === categoryId);
+    if (!cat || !cat.isElective) return;
+
+    const validIds = Array.from(new Set(courseIds)).filter((id) =>
+      cat.courses.some((course) => course.id === id)
+    );
+
+    const credits = cat.courses
+      .filter((c) => validIds.includes(c.id))
+      .reduce((sum, c) => sum + c.credits, 0);
+
+    if (credits > cat.maxCredits) return;
+
+    setSelections((prev) => {
+      const current = prev[categoryId] || { selectedCourseIds: [], status: "not_started" };
+      if (current.status === "finalized") return prev;
+
+      return {
+        ...prev,
+        [categoryId]: {
+          selectedCourseIds: validIds,
+          status: validIds.length > 0 ? "draft" : "not_started",
+        },
+      };
+    });
+
+    setEduRevSelections((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((courseId) => {
+        if (updated[courseId].categoryId === categoryId && !validIds.includes(courseId)) {
+          delete updated[courseId];
+        }
+      });
+      return updated;
+    });
+  };
+
   const finalizeCategory = (categoryId: string) => {
     setSelections((prev) => ({
       ...prev,
@@ -205,6 +244,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         selections,
         eduRevSelections,
         toggleCourse,
+        setCategorySelectedCourses,
         getCreditsUsed,
         finalizeCategory,
         getStatus,

@@ -86,6 +86,7 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
   const status = getStatus(category.id);
   const creditsUsed = getCreditsUsed(category.id);
   const isFinalized = status === "finalized";
+  const itemCountLabel = category.id === "cat-4" ? "6 pathways" : `${category.courses.length} courses`;
   const gradient = gradientMap[category.colorKey] || gradientMap.blue;
   const borderColor = borderMap[category.colorKey] || borderMap.blue;
 
@@ -127,7 +128,7 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
           )}
         </div>
         <p className="text-xs text-muted-foreground font-mono tracking-tight">
-          {category.code} · {category.courses.length} courses
+          {category.code} · {itemCountLabel}
         </p>
 
         {/* Meter */}
