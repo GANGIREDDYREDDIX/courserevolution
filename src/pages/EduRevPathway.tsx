@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
+import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
 
-type PathwayId = "placements" | "entrepreneurship" | "revenue_generation" | "higher_studies" | "govt_exams";
+type PathwayId = EduRevPathwayId;
 type MinorKey = "cloud" | "cyber" | "generic";
 
 const pathways: Array<{
@@ -34,15 +35,6 @@ const pathways: Array<{
     color: "from-purple-500 to-purple-600",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200"
-  },
-  {
-    id: "revenue_generation",
-    title: "Revenue Generation",
-    description: "Earn while studying through freelancing and projects",
-    icon: "💰",
-    color: "from-green-500 to-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200"
   },
   {
     id: "higher_studies",
@@ -81,6 +73,12 @@ type TierPlan = {
   role: string;
   dataFocus: string;
   certifications: string[];
+};
+
+const salaryToTierId: Record<TierPlan["salary"], EduRevTierId> = {
+  "₹50 LPA Track": "tier_50",
+  "₹30 LPA Track": "tier_30",
+  "₹20 LPA Track": "tier_20",
 };
 
 type PathwayDetails = {
@@ -478,8 +476,19 @@ const buildPathwayDetails = (minorLabel: string): Record<PathwayId, PathwayDetai
 
 const EduRevPathway = () => {
   const navigate = useNavigate();
-  const { selections } = useStudent();
-  const [selectedPathway, setSelectedPathway] = useState<PathwayId | null>(null);
+  const location = useLocation();
+  const { selections, setSelectedEduRevPathway, setSelectedEduRevTier } = useStudent();
+  const initialPathway = useMemo<PathwayId | null>(() => {
+    const candidate = (location.state as { selectedPathway?: PathwayId } | null)?.selectedPathway;
+    return pathways.some((pathway) => pathway.id === candidate) ? (candidate as PathwayId) : null;
+  }, [location.state]);
+  const initialTier = useMemo<EduRevTierId | null>(() => {
+    const candidate = (location.state as { selectedTier?: EduRevTierId } | null)?.selectedTier;
+    if (candidate === "tier_50" || candidate === "tier_30" || candidate === "tier_20") return candidate;
+    return null;
+  }, [location.state]);
+  const [selectedPathway, setSelectedPathway] = useState<PathwayId | null>(initialPathway);
+  const [selectedTier, setSelectedTier] = useState<EduRevTierId | null>(initialTier);
 
   const { selectedMinorKey, selectedMinorLabel } = useMemo(() => {
     const minorIds = selections["cat-4"]?.selectedCourseIds || [];
@@ -504,10 +513,28 @@ const EduRevPathway = () => {
   const pathwayDetailsMap = useMemo(() => buildPathwayDetails(selectedMinorLabel), [selectedMinorLabel]);
   const selectedPathwayDetails = selectedPathway ? pathwayDetailsMap[selectedPathway] : null;
 
+  const handleOpenTierDetail = (tier: TierPlan) => {
+    if (!selectedPathwayMeta || !selectedPathwayDetails) return;
+
+    navigate("/edurev-pathway/tier-detail", {
+      state: {
+        pathwayId: selectedPathway,
+        selectedTier: salaryToTierId[tier.salary],
+        pathwayTitle: selectedPathwayMeta.title,
+        minorLabel: selectedMinorLabel,
+        tier,
+        overview: selectedPathwayDetails.overview,
+        parameters: selectedPathwayDetails.parameters,
+        outcomes: selectedPathwayDetails.outcomes,
+      },
+    });
+  };
+
   const handleContinue = () => {
-    if (selectedPathway) {
-      // Navigate to the Edu Rev overview with selected pathway as context
-      navigate("/edurev-overview", { state: { pathway: selectedPathway } });
+    if (selectedPathway && selectedTier) {
+      setSelectedEduRevPathway(selectedPathway);
+      setSelectedEduRevTier(selectedTier);
+      navigate("/edurev-overview", { state: { pathway: selectedPathway, tier: selectedTier } });
     }
   };
 
@@ -532,7 +559,14 @@ const EduRevPathway = () => {
         {pathways.map((pathway) => (
           <motion.button
             key={pathway.id}
-            onClick={() => setSelectedPathway(pathway.id)}
+            onClick={() => {
+              if (selectedPathway !== pathway.id) {
+                setSelectedTier(null);
+                setSelectedEduRevTier(null);
+              }
+              setSelectedPathway(pathway.id);
+              setSelectedEduRevPathway(pathway.id);
+            }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`text-left rounded-2xl border-2 p-6 transition-all ${
@@ -565,6 +599,9 @@ const EduRevPathway = () => {
           <p className="text-sm text-muted-foreground mb-5">
             Based on your selected elective minor, here is a salary-tier roadmap with role focus, data focus, and certifications.
           </p>
+          <p className="text-xs font-semibold text-primary mb-4">
+            Select one salary track to continue.
+          </p>
 
           {selectedPathwayDetails && (
             <div className="mb-5 rounded-xl border border-primary/20 bg-primary/5 p-4">
@@ -595,8 +632,35 @@ const EduRevPathway = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {tierPlans.map((tier) => (
-              <div key={tier.salary} className="rounded-xl border border-border bg-secondary/20 p-4">
-                <p className="text-sm font-bold text-primary mb-1">{tier.salary}</p>
+              <div
+                key={tier.salary}
+                onClick={() => {
+                  const nextTier = salaryToTierId[tier.salary];
+                  setSelectedTier(nextTier);
+                  setSelectedEduRevTier(nextTier);
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    const nextTier = salaryToTierId[tier.salary];
+                    setSelectedTier(nextTier);
+                    setSelectedEduRevTier(nextTier);
+                  }
+                }}
+                className={`rounded-xl border p-4 text-left transition-all hover:shadow-md cursor-pointer ${
+                  selectedTier === salaryToTierId[tier.salary]
+                    ? "border-primary ring-2 ring-primary/25 bg-primary/5"
+                    : "border-border bg-secondary/20 hover:border-primary/40"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="text-sm font-bold text-primary">{tier.salary}</p>
+                  {selectedTier === salaryToTierId[tier.salary] && (
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary text-white">Selected</span>
+                  )}
+                </div>
                 <p className="text-base font-semibold text-foreground mb-2">{tier.role}</p>
                 <p className="text-xs text-muted-foreground mb-3">
                   <span className="font-semibold text-foreground">Data Focus:</span> {tier.dataFocus}
@@ -609,6 +673,20 @@ const EduRevPathway = () => {
                     ))}
                   </ul>
                 </div>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    const nextTier = salaryToTierId[tier.salary];
+                    setSelectedTier(nextTier);
+                    setSelectedEduRevTier(nextTier);
+                    handleOpenTierDetail(tier);
+                  }}
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80"
+                >
+                  Open detailed plan
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
@@ -626,7 +704,7 @@ const EduRevPathway = () => {
 
         <Button
           onClick={handleContinue}
-          disabled={!selectedPathway}
+          disabled={!selectedPathway || !selectedTier}
           className="inline-flex items-center gap-2 h-10 px-6 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue to Course Overview

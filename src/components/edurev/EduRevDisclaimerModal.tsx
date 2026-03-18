@@ -38,7 +38,7 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel }: EduRevDisclaimerMo
             onClick={onCancel}
             className="h-10 px-6"
           >
-            Cancel
+            No
           </Button>
           <Button
             onClick={onConfirm}

@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "luc
 
 const ReviewAll = () => {
   const navigate = useNavigate();
-  const { categories, selections, getCreditsUsed, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
+  const { categories, selections, getCreditsUsed, areAllCategoriesSelected, getUnselectedCategoryNames, setHasJoinedEduRev } = useStudent();
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
@@ -145,10 +145,15 @@ const ReviewAll = () => {
       <EduRevDisclaimerModal
         open={showDisclaimer}
         onConfirm={() => {
+          setHasJoinedEduRev(true);
           setShowDisclaimer(false);
           navigate("/edurev-pathway");
         }}
-        onCancel={() => setShowDisclaimer(false)}
+        onCancel={() => {
+          setHasJoinedEduRev(false);
+          setShowDisclaimer(false);
+          navigate("/edurev-overview");
+        }}
       />
     </div>
   );

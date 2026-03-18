@@ -1,22 +1,28 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { motion } from "framer-motion";
-import EduRevDisclaimerModal from "@/components/edurev/EduRevDisclaimerModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { toast } from "sonner";
 import { 
   Lightbulb,
   BookOpen,
   Briefcase, 
   Award, 
   Code, 
-  TrendingUp,
-  ArrowRight,
   DollarSign,
   FileText,
+  Download,
+  FileSpreadsheet,
   Globe,
   Laptop,
-  Network
+  Network,
+  Target
 } from "lucide-react";
+import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
 
 // Dummy data for each term
 const termDetails: Record<number, {
@@ -300,9 +306,35 @@ const termDetails: Record<number, {
 const EduRevOverview = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { categories, selections, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
+  const location = useLocation();
+  const {
+    categories,
+    selections,
+    areAllCategoriesSelected,
+    getUnselectedCategoryNames,
+    hasJoinedEduRev,
+    selectedEduRevPathway,
+    selectedEduRevTier,
+    setSelectedEduRevPathway,
+    setSelectedEduRevTier,
+  } = useStudent();
   const [selectedTerm, setSelectedTerm] = useState<number>(1);
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [activeOutClassCategory, setActiveOutClassCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
+  const statePathway = (location.state as { pathway?: EduRevPathwayId } | null)?.pathway;
+  const stateTier = (location.state as { tier?: EduRevTierId } | null)?.tier;
+
+  const effectivePathway: EduRevPathwayId | null = statePathway || selectedEduRevPathway;
+  const effectiveTier: EduRevTierId | null = stateTier || selectedEduRevTier;
+
+  useEffect(() => {
+    if (statePathway) setSelectedEduRevPathway(statePathway);
+    if (stateTier) setSelectedEduRevTier(stateTier);
+  }, [statePathway, stateTier, setSelectedEduRevPathway, setSelectedEduRevTier]);
 
   const category = categoryId ? categories.find((c) => c.id === categoryId) : null;
   const selectedCourses = category
@@ -360,7 +392,177 @@ const EduRevOverview = () => {
   const terms = Object.keys(coursesByTerm).map(Number).sort((a, b) => a - b);
 
   const selectedTermDetails = termDetails[selectedTerm] || { inClass: [], outClass: [] };
+
+  const pathwayLabelMap: Record<EduRevPathwayId, string> = {
+    placements: "Placements",
+    entrepreneurship: "Entrepreneurship",
+    revenue_generation: "Revenue Generation",
+    higher_studies: "Higher Studies",
+    govt_exams: "Government Exams",
+  };
+
+  const tierLabelMap: Record<EduRevTierId, string> = {
+    tier_50: "₹50 LPA Track",
+    tier_30: "₹30 LPA Track",
+    tier_20: "₹20 LPA Track",
+  };
+
+  const tierFocusMap: Record<EduRevTierId, string> = {
+    tier_50: "Focus level: elite outcomes, advanced depth, and high-impact execution",
+    tier_30: "Focus level: strong role readiness, applied depth, and measurable consistency",
+    tier_20: "Focus level: foundational outcomes, practical execution, and step-by-step growth",
+  };
+
+  const termMilestoneMap: Record<number, string> = {
+    1: "Foundation setup and baseline execution",
+    2: "Applied build phase with measurable outputs",
+    3: "Intermediate depth with portfolio expansion",
+    4: "Advanced implementation and performance improvement",
+    5: "Industry-aligned delivery and consistency",
+    6: "Scale, automation, and impact tracking",
+    7: "Capstone integration with role readiness",
+    8: "Final outcomes, showcase, and transition readiness",
+  };
+
+  const getOutClassByPathway = (
+    baseItems: Array<{ category: string; title: string; description: string; icon: any; color: string }>,
+    pathway: EduRevPathwayId | null,
+    tier: EduRevTierId | null,
+    term: number
+  ) => {
+    if (!pathway || pathway === "placements") return baseItems;
+
+    const presets: Record<EduRevPathwayId, Array<{ category: string; icon: any; focus: string }>> = {
+      placements: [
+        { category: "Projects", icon: Code, focus: "Portfolio and project impact" },
+        { category: "Certifications", icon: Award, focus: "Industry credential readiness" },
+        { category: "Internship", icon: Briefcase, focus: "Interview and internship preparation" },
+      ],
+      entrepreneurship: [
+        { category: "Projects", icon: Code, focus: "MVP building and iteration" },
+        { category: "Revenue Generation", icon: DollarSign, focus: "Early customer acquisition" },
+        { category: "Internship", icon: Briefcase, focus: "Founder ecosystem exposure" },
+      ],
+      revenue_generation: [
+        { category: "Revenue Generation", icon: DollarSign, focus: "Freelance and consulting income" },
+        { category: "Projects", icon: Code, focus: "Service portfolio depth" },
+        { category: "Certifications", icon: Award, focus: "Trust and pricing premium" },
+      ],
+      higher_studies: [
+        { category: "Higher Studies", icon: BookOpen, focus: "Research and application readiness" },
+        { category: "Projects", icon: FileText, focus: "Publication-worthy project outputs" },
+        { category: "Certifications", icon: Award, focus: "Profile strengthening credentials" },
+      ],
+      govt_exams: [
+        { category: "Government Exams", icon: Target, focus: "Exam strategy and consistency" },
+        { category: "Projects", icon: FileText, focus: "Role-relevant practical artifacts" },
+        { category: "Certifications", icon: Award, focus: "Domain-proof credentials" },
+      ],
+    };
+
+    const selectedPreset = presets[pathway];
+    const termMilestone = termMilestoneMap[term] || "Term-specific execution milestones";
+
+    if (baseItems.length === 0) {
+      return selectedPreset.map((slot) => ({
+        category: slot.category,
+        title: `${slot.category} - Term ${term}`,
+        description: `${tier ? `${tierFocusMap[tier]}. ` : ""}${slot.focus}. ${termMilestone}.`,
+        icon: slot.icon,
+        color: "from-slate-500 to-slate-600",
+      }));
+    }
+
+    return selectedPreset.map((slot, index) => {
+      const fallback = baseItems[index % baseItems.length];
+      const tierFocus = tier ? `${tierFocusMap[tier]}. ` : "";
+      return {
+        category: slot.category,
+        title: fallback?.title || `${slot.category} - Term ${term}`,
+        description: `${tierFocus}${slot.focus}. ${fallback?.description || ""} ${termMilestone}.`.trim(),
+        icon: slot.icon,
+        color: fallback?.color || "from-slate-500 to-slate-600",
+      };
+    });
+  };
+
+  const pathwayOutClass = getOutClassByPathway(
+    selectedTermDetails.outClass,
+    effectivePathway,
+    effectiveTier,
+    selectedTerm
+  );
+  const groupedOutClassMap = pathwayOutClass.reduce((acc, item) => {
+    (acc[item.category] ||= []).push(item);
+    return acc;
+  }, {} as Record<string, typeof pathwayOutClass>);
+  const groupedOutClassEntries = Object.entries(groupedOutClassMap);
+  const activeOutClassItems = activeOutClassCategory ? groupedOutClassMap[activeOutClassCategory] || [] : [];
   const termYearLabel = `Year ${Math.ceil(selectedTerm / 2)} Sem ${selectedTerm % 2 === 1 ? 1 : 2}`;
+
+  const curriculumRows = selectedCourses
+    .slice()
+    .sort((a, b) => a.term - b.term || a.name.localeCompare(b.name))
+    .map((course) => {
+      const categoryName = categories.find((c) => c.id === course.categoryId)?.name || "Unknown Category";
+      return {
+        category: categoryName,
+        courseName: course.name,
+        courseCode: course.courseCode,
+        term: `Term ${course.term}`,
+        yearSem: course.yearLabel,
+        credits: course.credits,
+      };
+    });
+
+  const handleDownloadPdf = () => {
+    if (curriculumRows.length === 0) {
+      toast.error("No curriculum data to export");
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: "landscape" });
+    const title = "Selected Curriculum";
+    const generatedAt = `Generated: ${new Date().toLocaleString()}`;
+
+    doc.setFontSize(16);
+    doc.text(title, 14, 14);
+    doc.setFontSize(10);
+    doc.text(generatedAt, 14, 20);
+
+    autoTable(doc, {
+      startY: 26,
+      head: [["Category", "Course", "Code", "Term", "Year/Sem", "Credits"]],
+      body: curriculumRows.map((row) => [
+        row.category,
+        row.courseName,
+        row.courseCode,
+        row.term,
+        row.yearSem,
+        String(row.credits),
+      ]),
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: [249, 115, 22] },
+    });
+
+    doc.save("selected-curriculum.pdf");
+    toast.success("PDF downloaded");
+  };
+
+  const handleDownloadExcel = () => {
+    if (curriculumRows.length === 0) {
+      toast.error("No curriculum data to export");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(curriculumRows, {
+      header: ["category", "courseName", "courseCode", "term", "yearSem", "credits"],
+    });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Curriculum");
+    XLSX.writeFile(workbook, "selected-curriculum.xlsx");
+    toast.success("Excel downloaded");
+  };
 
   const outClassTheme: Record<string, { card: string; iconWrap: string; icon: string; title: string }> = {
     "Revenue Generation": {
@@ -387,6 +589,18 @@ const EduRevOverview = () => {
       icon: "text-white",
       title: "text-purple-700",
     },
+    "Higher Studies": {
+      card: "bg-indigo-50 border-indigo-200",
+      iconWrap: "bg-indigo-500",
+      icon: "text-white",
+      title: "text-indigo-700",
+    },
+    "Government Exams": {
+      card: "bg-rose-50 border-rose-200",
+      iconWrap: "bg-rose-500",
+      icon: "text-white",
+      title: "text-rose-700",
+    },
   };
 
   return (
@@ -399,9 +613,15 @@ const EduRevOverview = () => {
         <div className="mb-8 rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
           <p className="text-[11px] uppercase tracking-[0.18em] text-primary/80 mb-3">Course Overview</p>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-6">
-            Master Concepts Inside
-            <br />
-            And Outside the Classroom
+            {hasJoinedEduRev ? (
+              <>
+                Master Concepts Inside
+                <br />
+                And Outside the Classroom
+              </>
+            ) : (
+              <>Master Concepts Inside the Classroom</>
+            )}
           </h1>
 
           <div className="rounded-xl bg-secondary/40 border border-border p-1 mb-7 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1">
@@ -423,8 +643,8 @@ const EduRevOverview = () => {
             })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5">
+          <div className={`grid grid-cols-1 ${hasJoinedEduRev ? "lg:grid-cols-2" : ""} gap-6`}>
+            <div className={`rounded-2xl border border-blue-200 bg-blue-50/40 p-5 ${hasJoinedEduRev ? "" : "max-w-3xl"}`}>
               <div className="flex items-center gap-3 mb-3">
                 <span className="w-12 h-12 rounded-xl bg-blue-500 text-white inline-flex items-center justify-center shadow-sm">
                   <BookOpen className="w-6 h-6" />
@@ -458,57 +678,92 @@ const EduRevOverview = () => {
               )}
             </div>
 
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="w-12 h-12 rounded-xl bg-emerald-500 text-white inline-flex items-center justify-center shadow-sm">
-                  <Lightbulb className="w-6 h-6" />
-                </span>
-                <h2 className="text-4xl font-bold text-foreground leading-none">Outside Class</h2>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Experiential learning through real-world projects, certifications, and professional opportunities.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {selectedTermDetails.outClass.slice(0, 4).map((activity) => {
-                  const Icon = activity.icon;
-                  const theme = outClassTheme[activity.category] || {
-                    card: "bg-slate-50 border-slate-200",
-                    iconWrap: "bg-slate-500",
-                    icon: "text-white",
-                    title: "text-slate-700",
-                  };
-
-                  return (
-                    <div key={activity.title} className={`rounded-xl border p-4 ${theme.card}`}>
-                      <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center mb-3 ${theme.iconWrap}`}>
-                        <Icon className={`w-4 h-4 ${theme.icon}`} />
-                      </span>
-                      <p className={`text-lg font-bold ${theme.title}`}>{activity.category}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-                    </div>
-                  );
-                })}
-
-                {selectedTermDetails.outClass.length === 0 && (
-                  <div className="col-span-full rounded-xl border border-dashed border-emerald-200 bg-card/70 p-4 text-sm text-muted-foreground">
-                    No outside-class initiatives available for this term yet.
+            {hasJoinedEduRev && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="w-12 h-12 rounded-xl bg-emerald-500 text-white inline-flex items-center justify-center shadow-sm">
+                    <Lightbulb className="w-6 h-6" />
+                  </span>
+                  <h2 className="text-4xl font-bold text-foreground leading-none">Outside Class</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Experiential learning through real-world projects, certifications, and professional opportunities.
+                </p>
+                {effectivePathway && (
+                  <div className="mb-4 space-y-1">
+                    <p className="text-xs font-semibold text-primary">
+                      Showing initiatives for: {pathwayLabelMap[effectivePathway]}
+                    </p>
+                    {effectiveTier && (
+                      <p className="text-xs font-semibold text-primary/80">
+                        Selected salary track: {tierLabelMap[effectiveTier]}
+                      </p>
+                    )}
                   </div>
                 )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {groupedOutClassEntries.map(([category, items]) => {
+                    const preview = items[0];
+                    const Icon = preview.icon;
+                    const theme = outClassTheme[category] || {
+                      card: "bg-slate-50 border-slate-200",
+                      iconWrap: "bg-slate-500",
+                      icon: "text-white",
+                      title: "text-slate-700",
+                    };
+
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => setActiveOutClassCategory(category)}
+                        className={`rounded-xl border p-4 text-left ${theme.card} hover:shadow-sm transition-shadow`}
+                      >
+                        <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center mb-3 ${theme.iconWrap}`}>
+                          <Icon className={`w-4 h-4 ${theme.icon}`} />
+                        </span>
+                        <p className={`text-lg font-bold ${theme.title}`}>{category}</p>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{preview.description}</p>
+                        <p className="text-xs font-semibold text-primary mt-2">
+                          View details ({items.length})
+                        </p>
+                      </button>
+                    );
+                  })}
+
+                  {groupedOutClassEntries.length === 0 && (
+                    <div className="col-span-full rounded-xl border border-dashed border-emerald-200 bg-card/70 p-4 text-sm text-muted-foreground">
+                      No outside-class initiatives available for this term yet.
+                    </div>
+                  )}
+                </div>
+
+                <Dialog open={!!activeOutClassCategory} onOpenChange={(isOpen) => !isOpen && setActiveOutClassCategory(null)}>
+                  <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>{activeOutClassCategory} Initiatives</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
+                      {activeOutClassItems.map((item, index) => (
+                        <div key={`${item.title}-${index}`} className="rounded-lg border border-border bg-secondary/20 p-3">
+                          <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
-            </div>
+            )}
           </div>
 
-          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-4 flex items-start gap-4">
-            <span className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0">
-              <TrendingUp className="w-5 h-5" />
-            </span>
-            <div>
-              <p className="text-2xl font-bold text-foreground">Ready to Choose Your Benefits?</p>
-              <p className="text-base text-muted-foreground mt-1">
-                You&apos;ll now select specific Edu Rev benefits for each of your courses. Choose options that align with your learning goals and career aspirations.
-              </p>
-            </div>
+          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-4">
+            <p className="text-2xl font-bold text-foreground">Ready to Choose Your Benefits?</p>
+            <p className="text-base text-muted-foreground mt-1">
+              You&apos;ll now select specific Edu Rev benefits for each of your courses. Choose options that align with your learning goals and career aspirations.
+            </p>
           </div>
         </div>
 
@@ -523,26 +778,25 @@ const EduRevOverview = () => {
             View Your Selected Curriculum
           </motion.button>
 
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6 }}
-            onClick={() => setShowDisclaimer(true)}
-            className="inline-flex items-center gap-3 h-12 px-8 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white text-base font-bold hover:shadow-xl hover:scale-105 transition-all"
-          >
-            Proceed to Select Edu Rev Categories
-            <ArrowRight className="w-5 h-5" />
-          </motion.button>
-        </div>
+          <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={handleDownloadPdf}
+              className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-secondary/70 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download Curriculum PDF
+            </button>
 
-        <EduRevDisclaimerModal
-          open={showDisclaimer}
-          onConfirm={() => {
-            setShowDisclaimer(false);
-            navigate("/edurev-categories");
-          }}
-          onCancel={() => setShowDisclaimer(false)}
-        />
+            <button
+              onClick={handleDownloadExcel}
+              className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-secondary/70 transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Download Curriculum Excel
+            </button>
+          </div>
+
+        </div>
       </motion.div>
     </div>
   );

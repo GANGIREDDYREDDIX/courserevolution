@@ -10,6 +10,7 @@ import EduRevOptions from "./pages/EduRevOptions";
 import EduRevOverview from "./pages/EduRevOverview";
 import EduRevCategories from "./pages/EduRevCategories";
 import EduRevPathway from "./pages/EduRevPathway";
+import EduRevTierDetail from "./pages/EduRevTierDetail";
 import ReviewAll from "./pages/ReviewAll";
 import Preview from "./pages/Preview";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,10 @@ const App = () => (
             <Route
               path="/edurev-pathway"
               element={<AppShell><EduRevPathway /></AppShell>}
+            />
+            <Route
+              path="/edurev-pathway/tier-detail"
+              element={<AppShell><EduRevTierDetail /></AppShell>}
             />
             <Route
               path="/edurev-categories"

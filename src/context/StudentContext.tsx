@@ -4,6 +4,8 @@ import { mockCategories, type Category } from "@/data/mockCategories";
 import type { EduRevSelection } from "@/data/eduRevTypes";
 
 export type SelectionStatus = "not_started" | "draft" | "finalized";
+export type EduRevPathwayId = "placements" | "entrepreneurship" | "revenue_generation" | "higher_studies" | "govt_exams";
+export type EduRevTierId = "tier_50" | "tier_30" | "tier_20";
 
 export interface CategorySelection {
   selectedCourseIds: string[];
@@ -15,6 +17,9 @@ interface StudentContextValue {
   categories: Category[];
   selections: Record<string, CategorySelection>;
   eduRevSelections: Record<string, EduRevSelection>; // courseId -> EduRevSelection
+  hasJoinedEduRev: boolean;
+  selectedEduRevPathway: EduRevPathwayId | null;
+  selectedEduRevTier: EduRevTierId | null;
   toggleCourse: (categoryId: string, courseId: string) => void;
   setCategorySelectedCourses: (categoryId: string, courseIds: string[]) => void;
   getCreditsUsed: (categoryId: string) => number;
@@ -27,12 +32,18 @@ interface StudentContextValue {
   updateEduRevSelection: (courseId: string, updates: Partial<EduRevSelection>) => void;
   areAllEduRevSelectionsComplete: (categoryId: string) => boolean;
   deleteEduRevSelection: (courseId: string) => void;
+  setHasJoinedEduRev: (value: boolean) => void;
+  setSelectedEduRevPathway: (value: EduRevPathwayId | null) => void;
+  setSelectedEduRevTier: (value: EduRevTierId | null) => void;
 }
 
 const StudentContext = createContext<StudentContextValue | null>(null);
 
 const STORAGE_KEY = "course-mapper-selections";
 const EDU_REV_STORAGE_KEY = "course-mapper-edu-rev";
+const EDU_REV_JOINED_STORAGE_KEY = "course-mapper-edu-rev-joined";
+const EDU_REV_PATHWAY_STORAGE_KEY = "course-mapper-edu-rev-pathway";
+const EDU_REV_TIER_STORAGE_KEY = "course-mapper-edu-rev-tier";
 
 function normalizeSelections(raw: Record<string, CategorySelection>): Record<string, CategorySelection> {
   const normalized: Record<string, CategorySelection> = { ...raw };
@@ -67,9 +78,42 @@ function loadEduRevSelections(): Record<string, EduRevSelection> {
   return {};
 }
 
+function loadEduRevJoined(): boolean {
+  try {
+    const raw = localStorage.getItem(EDU_REV_JOINED_STORAGE_KEY);
+    if (raw !== null) return raw === "true";
+  } catch {}
+  return false;
+}
+
+function loadEduRevPathway(): EduRevPathwayId | null {
+  try {
+    const raw = localStorage.getItem(EDU_REV_PATHWAY_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = raw as EduRevPathwayId;
+    const allowed: EduRevPathwayId[] = ["placements", "entrepreneurship", "revenue_generation", "higher_studies", "govt_exams"];
+    return allowed.includes(parsed) ? parsed : null;
+  } catch {}
+  return null;
+}
+
+function loadEduRevTier(): EduRevTierId | null {
+  try {
+    const raw = localStorage.getItem(EDU_REV_TIER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = raw as EduRevTierId;
+    const allowed: EduRevTierId[] = ["tier_50", "tier_30", "tier_20"];
+    return allowed.includes(parsed) ? parsed : null;
+  } catch {}
+  return null;
+}
+
 export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selections, setSelections] = useState<Record<string, CategorySelection>>(loadSelections);
   const [eduRevSelections, setEduRevSelections] = useState<Record<string, EduRevSelection>>(loadEduRevSelections);
+  const [hasJoinedEduRev, setHasJoinedEduRev] = useState<boolean>(loadEduRevJoined);
+  const [selectedEduRevPathway, setSelectedEduRevPathway] = useState<EduRevPathwayId | null>(loadEduRevPathway);
+  const [selectedEduRevTier, setSelectedEduRevTier] = useState<EduRevTierId | null>(loadEduRevTier);
 
   useEffect(() => {
     setSelections((prev) => normalizeSelections(prev));
@@ -82,6 +126,26 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem(EDU_REV_STORAGE_KEY, JSON.stringify(eduRevSelections));
   }, [eduRevSelections]);
+
+  useEffect(() => {
+    localStorage.setItem(EDU_REV_JOINED_STORAGE_KEY, String(hasJoinedEduRev));
+  }, [hasJoinedEduRev]);
+
+  useEffect(() => {
+    if (!selectedEduRevPathway) {
+      localStorage.removeItem(EDU_REV_PATHWAY_STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(EDU_REV_PATHWAY_STORAGE_KEY, selectedEduRevPathway);
+  }, [selectedEduRevPathway]);
+
+  useEffect(() => {
+    if (!selectedEduRevTier) {
+      localStorage.removeItem(EDU_REV_TIER_STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(EDU_REV_TIER_STORAGE_KEY, selectedEduRevTier);
+  }, [selectedEduRevTier]);
 
   const getSelection = (catId: string): CategorySelection =>
     selections[catId] || { selectedCourseIds: [], status: "not_started" };
@@ -256,6 +320,9 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         categories: mockCategories,
         selections,
         eduRevSelections,
+        hasJoinedEduRev,
+        selectedEduRevPathway,
+        selectedEduRevTier,
         toggleCourse,
         setCategorySelectedCourses,
         getCreditsUsed,
@@ -268,6 +335,9 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateEduRevSelection,
         areAllEduRevSelectionsComplete,
         deleteEduRevSelection,
+        setHasJoinedEduRev,
+        setSelectedEduRevPathway,
+        setSelectedEduRevTier,
       }}
     >
       {children}
