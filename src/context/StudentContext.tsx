@@ -18,6 +18,8 @@ interface StudentContextValue {
   toggleCourse: (categoryId: string, courseId: string) => void;
   setCategorySelectedCourses: (categoryId: string, courseIds: string[]) => void;
   getCreditsUsed: (categoryId: string) => number;
+  areAllCategoriesSelected: () => boolean;
+  getUnselectedCategoryNames: () => string[];
   finalizeCategory: (categoryId: string) => void;
   getStatus: (categoryId: string) => SelectionStatus;
   setEduRevSelection: (courseId: string, eduRevData: EduRevSelection) => void;
@@ -236,6 +238,17 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const areAllCategoriesSelected = () =>
+    mockCategories.every((category) => {
+      const selected = selections[category.id]?.selectedCourseIds || [];
+      return selected.length > 0;
+    });
+
+  const getUnselectedCategoryNames = () =>
+    mockCategories
+      .filter((category) => (selections[category.id]?.selectedCourseIds || []).length === 0)
+      .map((category) => category.name);
+
   return (
     <StudentContext.Provider
       value={{
@@ -246,6 +259,8 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         toggleCourse,
         setCategorySelectedCourses,
         getCreditsUsed,
+        areAllCategoriesSelected,
+        getUnselectedCategoryNames,
         finalizeCategory,
         getStatus,
         setEduRevSelection,

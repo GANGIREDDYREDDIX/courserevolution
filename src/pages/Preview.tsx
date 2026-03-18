@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 const Preview = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { categories, selections, getCreditsUsed, toggleCourse } = useStudent();
+  const { categories, selections, getCreditsUsed, toggleCourse, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
   const [showConsent, setShowConsent] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
 
@@ -23,6 +23,8 @@ const Preview = () => {
     return category.courses.filter((c) => sel.includes(c.id));
   }, [category, selections]);
   const creditsUsed = category ? getCreditsUsed(category.id) : 0;
+  const allCategoriesSelected = areAllCategoriesSelected();
+  const unselectedCategoryNames = getUnselectedCategoryNames();
 
   const coursesByTerm = useMemo(() => {
     const grouped = new Map<number, typeof selectedCourses>();
@@ -105,6 +107,18 @@ const Preview = () => {
         </div>
       ))}
 
+      {!allCategoriesSelected && (
+        <div className="mb-4 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+          <p className="font-medium">Select all course categories before continuing to term initiatives.</p>
+          {unselectedCategoryNames.length > 0 && (
+            <p className="text-xs mt-1">
+              Remaining: {unselectedCategoryNames.slice(0, 4).join(", ")}
+              {unselectedCategoryNames.length > 4 ? ` +${unselectedCategoryNames.length - 4} more` : ""}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="flex gap-3 justify-between mt-8">
         <button
           onClick={() => navigate(`/category/${categoryId}`)}
@@ -116,7 +130,7 @@ const Preview = () => {
         {!consentGiven ? (
           <button
             onClick={() => setShowConsent(true)}
-            disabled={selectedCourses.length === 0}
+            disabled={selectedCourses.length === 0 || !allCategoriesSelected}
             className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Shield className="w-4 h-4" />
@@ -125,7 +139,8 @@ const Preview = () => {
         ) : (
           <button
             onClick={() => navigate(`/edurev-overview/${categoryId}`)}
-            className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+            disabled={!allCategoriesSelected}
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Explore Edu Rev Initiatives
             <ArrowRight className="w-4 h-4" />

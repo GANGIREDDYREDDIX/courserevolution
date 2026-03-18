@@ -59,7 +59,7 @@ const engineeringMinorPaths = [
 const CategoryDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { student, categories, selections, toggleCourse, setCategorySelectedCourses, getCreditsUsed, getStatus } = useStudent();
+  const { student, categories, selections, toggleCourse, setCategorySelectedCourses, getCreditsUsed, getStatus, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
 
   const category = categories.find((c) => c.id === id);
   if (!category) return (
@@ -125,6 +125,9 @@ const CategoryDetail = () => {
 
   const getTermSelectedCredits = (courses: typeof category.courses) =>
     courses.filter((c) => sel.includes(c.id)).reduce((sum, c) => sum + c.credits, 0);
+
+  const allCategoriesSelected = areAllCategoriesSelected();
+  const unselectedCategoryNames = getUnselectedCategoryNames();
 
   const handlePathChange = (pathId: string) => {
     if (!isEngineeringMinor || pathId === selectedMinorPath) return;
@@ -360,7 +363,7 @@ const CategoryDetail = () => {
       </Accordion>
 
       {/* Actions */}
-      {!isFinalized && sel.length > 0 && (
+      {!isFinalized && sel.length > 0 && allCategoriesSelected && (
         <div className="mt-8 flex gap-3 justify-end">
           <button
             onClick={() => navigate(`/preview/${category.id}`)}
@@ -369,6 +372,18 @@ const CategoryDetail = () => {
             Review Selected Courses
             <ArrowRight className="w-4 h-4" />
           </button>
+        </div>
+      )}
+
+      {!isFinalized && sel.length > 0 && !allCategoriesSelected && (
+        <div className="mt-8 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+          <p className="font-medium">Complete all course categories to continue to review.</p>
+          {unselectedCategoryNames.length > 0 && (
+            <p className="text-xs mt-1">
+              Remaining: {unselectedCategoryNames.slice(0, 4).join(", ")}
+              {unselectedCategoryNames.length > 4 ? ` +${unselectedCategoryNames.length - 4} more` : ""}
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -303,7 +303,7 @@ const termDetails: Record<number, {
 const EduRevOverview = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { categories, selections } = useStudent();
+  const { categories, selections, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
   const [selectedTerm, setSelectedTerm] = useState<number | null>(null);
 
   const category = categories.find((c) => c.id === categoryId);
@@ -320,6 +320,32 @@ const EduRevOverview = () => {
           className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
         >
           Back to Home
+        </button>
+      </div>
+    );
+  }
+
+  const allCategoriesSelected = areAllCategoriesSelected();
+  const remainingCategories = getUnselectedCategoryNames();
+
+  if (!allCategoriesSelected) {
+    return (
+      <div className="py-20 max-w-2xl mx-auto text-center">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Complete all categories first</h1>
+        <p className="text-muted-foreground mb-4">
+          You can access the term initiatives only after selecting all course categories.
+        </p>
+        {remainingCategories.length > 0 && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-5">
+            Remaining: {remainingCategories.slice(0, 5).join(", ")}
+            {remainingCategories.length > 5 ? ` +${remainingCategories.length - 5} more` : ""}
+          </p>
+        )}
+        <button
+          onClick={() => navigate("/")}
+          className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+        >
+          Back to Categories
         </button>
       </div>
     );
