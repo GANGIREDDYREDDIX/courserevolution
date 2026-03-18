@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
+import EduRevDisclaimerModal from "@/components/edurev/EduRevDisclaimerModal";
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 
 const ReviewAll = () => {
   const navigate = useNavigate();
   const { categories, selections, getCreditsUsed, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   const allCategoriesSelected = areAllCategoriesSelected();
   const remaining = getUnselectedCategoryNames();
@@ -132,13 +134,22 @@ const ReviewAll = () => {
         </button>
 
         <button
-          onClick={() => navigate("/edurev-overview")}
+          onClick={() => setShowDisclaimer(true)}
           className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
         >
-          Continue to Term Initiatives
+          Proceed to Edu Rev
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      <EduRevDisclaimerModal
+        open={showDisclaimer}
+        onConfirm={() => {
+          setShowDisclaimer(false);
+          navigate("/edurev-pathway");
+        }}
+        onCancel={() => setShowDisclaimer(false)}
+      />
     </div>
   );
 };

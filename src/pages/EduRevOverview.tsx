@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { motion } from "framer-motion";
+import EduRevDisclaimerModal from "@/components/edurev/EduRevDisclaimerModal";
 import { 
   Lightbulb,
   BookOpen,
@@ -301,6 +302,7 @@ const EduRevOverview = () => {
   const navigate = useNavigate();
   const { categories, selections, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
   const [selectedTerm, setSelectedTerm] = useState<number>(1);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   const category = categoryId ? categories.find((c) => c.id === categoryId) : null;
   const selectedCourses = category
@@ -325,7 +327,7 @@ const EduRevOverview = () => {
 
   const allCategoriesSelected = areAllCategoriesSelected();
   const remainingCategories = getUnselectedCategoryNames();
-  const proceedTarget = categoryId ? `/edurev/${categoryId}` : "/";
+  const proceedTarget = "/edurev-categories";
 
   if (!allCategoriesSelected) {
     return (
@@ -357,42 +359,35 @@ const EduRevOverview = () => {
   }
   const terms = Object.keys(coursesByTerm).map(Number).sort((a, b) => a - b);
 
-  const outsideClassActivities = [
-    {
-      icon: TrendingUp,
-      title: "Revenue Generation",
-      description: "Real-world business projects that generate revenue",
-      color: "from-orange-500 to-orange-600",
-      bgColor: "bg-orange-50",
-      textColor: "text-orange-700"
-    },
-    {
-      icon: Code,
-      title: "Projects",
-      description: "Hands-on practical projects to build your portfolio",
-      color: "from-yellow-500 to-yellow-600",
-      bgColor: "bg-yellow-50",
-      textColor: "text-yellow-700"
-    },
-    {
-      icon: Award,
-      title: "Certifications",
-      description: "Industry-recognized certifications to boost your resume",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-700"
-    },
-    {
-      icon: Briefcase,
-      title: "Internships",
-      description: "Professional internship opportunities with top companies",
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-700"
-    }
-  ];
-
   const selectedTermDetails = termDetails[selectedTerm] || { inClass: [], outClass: [] };
+  const termYearLabel = `Year ${Math.ceil(selectedTerm / 2)} Sem ${selectedTerm % 2 === 1 ? 1 : 2}`;
+
+  const outClassTheme: Record<string, { card: string; iconWrap: string; icon: string; title: string }> = {
+    "Revenue Generation": {
+      card: "bg-orange-50 border-orange-200",
+      iconWrap: "bg-orange-500",
+      icon: "text-white",
+      title: "text-orange-700",
+    },
+    Projects: {
+      card: "bg-amber-50 border-amber-200",
+      iconWrap: "bg-amber-500",
+      icon: "text-white",
+      title: "text-amber-700",
+    },
+    Certifications: {
+      card: "bg-blue-50 border-blue-200",
+      iconWrap: "bg-blue-500",
+      icon: "text-white",
+      title: "text-blue-700",
+    },
+    Internship: {
+      card: "bg-purple-50 border-purple-200",
+      iconWrap: "bg-purple-500",
+      icon: "text-white",
+      title: "text-purple-700",
+    },
+  };
 
   return (
     <div className="py-8 max-w-6xl mx-auto animate-fade-in">
@@ -401,82 +396,153 @@ const EduRevOverview = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-            <div className="mb-10 rounded-2xl border border-slate-700 bg-[#07090f] text-white p-6 md:p-8 shadow-2xl">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-3">Course Overview</p>
-              <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-6">
-                Master Concepts Inside
-                <br />
-                And Outside the Classroom
-              </h1>
+        <div className="mb-8 rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-primary/80 mb-3">Course Overview</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-6">
+            Master Concepts Inside
+            <br />
+            And Outside the Classroom
+          </h1>
 
-              {/* Term tabs style */}
-              <div className="rounded-xl bg-[#11141d] border border-slate-800 p-1 mb-8 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((term) => {
-                  const hasContent = terms.includes(term);
+          <div className="rounded-xl bg-secondary/40 border border-border p-1 mb-7 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((term) => {
+              const hasContent = terms.includes(term);
+              return (
+                <button
+                  key={term}
+                  onClick={() => setSelectedTerm(term)}
+                  className={`h-10 rounded-lg text-sm font-semibold transition-all ${
+                    selectedTerm === term
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-foreground/80 hover:bg-secondary"
+                  } ${!hasContent ? "opacity-60" : ""}`}
+                >
+                  Term {term}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="w-12 h-12 rounded-xl bg-blue-500 text-white inline-flex items-center justify-center shadow-sm">
+                  <BookOpen className="w-6 h-6" />
+                </span>
+                <h2 className="text-4xl font-bold text-foreground leading-none">In Class</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Structured curriculum with comprehensive coverage of core concepts and technologies.
+              </p>
+
+              <div className="space-y-3">
+                {selectedTermDetails.inClass.slice(0, 3).map((course) => (
+                  <div key={course.code} className="rounded-xl border border-blue-100 bg-card p-4">
+                    <p className="text-base font-bold text-foreground">{course.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1 font-mono">
+                      {course.code} • {termYearLabel} • {course.credits} Credits
+                    </p>
+                  </div>
+                ))}
+                {selectedTermDetails.inClass.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-blue-200 bg-card/70 p-4 text-sm text-muted-foreground">
+                    No selected in-class courses yet.
+                  </div>
+                )}
+              </div>
+
+              {selectedTermDetails.inClass.length > 3 && (
+                <p className="text-sm font-semibold text-muted-foreground text-center mt-4">
+                  +{selectedTermDetails.inClass.length - 3} more courses
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="w-12 h-12 rounded-xl bg-emerald-500 text-white inline-flex items-center justify-center shadow-sm">
+                  <Lightbulb className="w-6 h-6" />
+                </span>
+                <h2 className="text-4xl font-bold text-foreground leading-none">Outside Class</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Experiential learning through real-world projects, certifications, and professional opportunities.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {selectedTermDetails.outClass.slice(0, 4).map((activity) => {
+                  const Icon = activity.icon;
+                  const theme = outClassTheme[activity.category] || {
+                    card: "bg-slate-50 border-slate-200",
+                    iconWrap: "bg-slate-500",
+                    icon: "text-white",
+                    title: "text-slate-700",
+                  };
+
                   return (
-                    <button
-                      key={term}
-                      onClick={() => setSelectedTerm(term)}
-                      className={`h-10 rounded-lg text-sm font-semibold transition-all ${
-                        selectedTerm === term
-                          ? "bg-[#1b2233] text-[#b6f25e]"
-                          : "text-slate-300 hover:bg-[#1b2233] hover:text-white"
-                      } ${!hasContent ? "opacity-60" : ""}`}
-                    >
-                      Term {term}
-                    </button>
+                    <div key={activity.title} className={`rounded-xl border p-4 ${theme.card}`}>
+                      <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center mb-3 ${theme.iconWrap}`}>
+                        <Icon className={`w-4 h-4 ${theme.icon}`} />
+                      </span>
+                      <p className={`text-lg font-bold ${theme.title}`}>{activity.category}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
+                    </div>
                   );
                 })}
-              </div>
 
-              {/* In Class + Out Class dark cards */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-2xl font-bold mb-3">In Class</h3>
-                  <div className="rounded-xl border border-slate-800 bg-[#11141d] p-4 md:p-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-200">
-                      {selectedTermDetails.inClass.map((course) => (
-                        <div key={course.code} className="flex gap-2">
-                          <span className="text-slate-500">•</span>
-                          <span>{course.title}</span>
-                        </div>
-                      ))}
-                      {selectedTermDetails.inClass.length === 0 && (
-                        <p className="text-slate-400">No selected in-class courses yet.</p>
-                      )}
-                    </div>
+                {selectedTermDetails.outClass.length === 0 && (
+                  <div className="col-span-full rounded-xl border border-dashed border-emerald-200 bg-card/70 p-4 text-sm text-muted-foreground">
+                    No outside-class initiatives available for this term yet.
                   </div>
-                </div>
-
-                <div>
-                  <h3 className="text-2xl font-bold mb-3">Out Class</h3>
-                  <div className="rounded-xl border border-slate-800 bg-[#11141d] p-4 md:p-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-200">
-                      {selectedTermDetails.outClass.map((activity) => (
-                        <div key={activity.title} className="flex gap-2">
-                          <span className="text-slate-500">•</span>
-                          <span>{activity.title}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Action Button */}
-            <div className="flex justify-center">
-              <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
-                onClick={() => navigate(proceedTarget)}
-                className="inline-flex items-center gap-3 h-12 px-8 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white text-base font-bold hover:shadow-xl hover:scale-105 transition-all"
-              >
-                Proceed to Select Edu Rev Categories
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
+          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-4 flex items-start gap-4">
+            <span className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0">
+              <TrendingUp className="w-5 h-5" />
+            </span>
+            <div>
+              <p className="text-2xl font-bold text-foreground">Ready to Choose Your Benefits?</p>
+              <p className="text-base text-muted-foreground mt-1">
+                You&apos;ll now select specific Edu Rev benefits for each of your courses. Choose options that align with your learning goals and career aspirations.
+              </p>
             </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 items-center justify-center">
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            onClick={() => navigate("/review")}
+            className="w-full max-w-2xl h-14 px-8 rounded-2xl bg-gradient-to-r from-teal-600 to-teal-700 text-white text-lg font-bold hover:shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all"
+          >
+            View Your Selected Curriculum
+          </motion.button>
+
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 }}
+            onClick={() => setShowDisclaimer(true)}
+            className="inline-flex items-center gap-3 h-12 px-8 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white text-base font-bold hover:shadow-xl hover:scale-105 transition-all"
+          >
+            Proceed to Select Edu Rev Categories
+            <ArrowRight className="w-5 h-5" />
+          </motion.button>
+        </div>
+
+        <EduRevDisclaimerModal
+          open={showDisclaimer}
+          onConfirm={() => {
+            setShowDisclaimer(false);
+            navigate("/edurev-categories");
+          }}
+          onCancel={() => setShowDisclaimer(false)}
+        />
       </motion.div>
     </div>
   );
