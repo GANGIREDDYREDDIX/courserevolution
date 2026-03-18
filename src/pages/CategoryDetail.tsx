@@ -78,6 +78,7 @@ const CategoryDetail = () => {
   const creditsUsed = getCreditsUsed(category.id);
   const isFinalized = status === "finalized";
   const isMandatoryCategory = !category.isElective;
+  const isEngineeringMinorPathOnly = category.id === "cat-4";
   const sel = selections[category.id]?.selectedCourseIds || [];
   const Icon = categoryIcons[category.id];
   const colorText = textMap[category.colorKey] || textMap.blue;
@@ -128,8 +129,11 @@ const CategoryDetail = () => {
   const handlePathChange = (pathId: string) => {
     if (!isEngineeringMinor || pathId === selectedMinorPath) return;
 
-    const keptIds = sel.filter((courseId) => courseId.startsWith(`${pathId}-`));
-    setCategorySelectedCourses(category.id, keptIds);
+    const pathwayCourseIds = category.courses
+      .filter((course) => course.id.startsWith(`${pathId}-`))
+      .map((course) => course.id);
+
+    setCategorySelectedCourses(category.id, pathwayCourseIds);
     setSelectedMinorPath(pathId);
   };
 
@@ -195,7 +199,7 @@ const CategoryDetail = () => {
             })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Select one pathway. Only courses from the selected pathway are shown below.
+            Select one pathway. Courses are auto-selected for the chosen pathway.
           </p>
         </div>
       )}
@@ -211,6 +215,13 @@ const CategoryDetail = () => {
         <div className="flex items-center gap-2.5 mb-6 px-4 py-3 rounded-lg bg-blue-50 text-blue-700 text-sm border border-blue-200">
           <Info className="w-4 h-4" />
           <span className="font-medium">This is a mandatory category. All courses are fixed and pre-selected.</span>
+        </div>
+      )}
+
+      {isEngineeringMinorPathOnly && (
+        <div className="flex items-center gap-2.5 mb-6 px-4 py-3 rounded-lg bg-orange-50 text-orange-700 text-sm border border-orange-200">
+          <Info className="w-4 h-4" />
+          <span className="font-medium">Engineering Minor is pathway-based. Select a pathway; individual course selection is disabled.</span>
         </div>
       )}
 
@@ -287,7 +298,7 @@ const CategoryDetail = () => {
                   {courses.map((course) => {
                     const isSelected = sel.includes(course.id);
                     const wouldExceed = creditsUsed + course.credits > category.maxCredits;
-                    const isDisabled = isMandatoryCategory || isFinalized || (!isSelected && wouldExceed);
+                    const isDisabled = isMandatoryCategory || isEngineeringMinorPathOnly || isFinalized || (!isSelected && wouldExceed);
 
                     return (
                       <label
@@ -295,7 +306,7 @@ const CategoryDetail = () => {
                         className={`flex flex-col gap-2 p-4 rounded-xl border-2 transition-all
                           ${isDisabled && !isSelected ? "opacity-40 pointer-events-none" : ""}
                           ${isSelected ? "bg-primary/[0.04] border-primary/30" : "border-border bg-card hover:bg-secondary/30"}
-                          ${isDisabled ? "cursor-default" : "cursor-pointer"}
+                          ${(isDisabled || isEngineeringMinorPathOnly) ? "cursor-default" : "cursor-pointer"}
                         `}
                       >
                         <div className="flex items-center justify-between">
@@ -307,13 +318,15 @@ const CategoryDetail = () => {
                               <Circle className={`w-5 h-5 ${isTermCompleted ? "text-border" : "text-border"} transition-colors`} />
                             )}
                           </div>
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={isSelected}
-                            disabled={isDisabled}
-                            onChange={() => toggleCourse(category.id, course.id)}
-                          />
+                          {!isEngineeringMinorPathOnly && (
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={isSelected}
+                              disabled={isDisabled}
+                              onChange={() => toggleCourse(category.id, course.id)}
+                            />
+                          )}
                           {/* Credits */}
                           <span className={`text-sm font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
                             {course.credits} Credits

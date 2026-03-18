@@ -15,6 +15,8 @@ const Preview = () => {
 
   const category = categories.find((c) => c.id === categoryId);
   const isMandatoryCategory = !!category && !category.isElective;
+  const isEngineeringMinorPathOnly = !!category && category.id === "cat-4";
+  const isReadOnlySelection = isMandatoryCategory || isEngineeringMinorPathOnly;
   const selectedCourses = useMemo(() => {
     if (!category) return [];
     const sel = selections[category.id]?.selectedCourseIds || [];
@@ -87,7 +89,7 @@ const Preview = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm font-bold text-foreground tabular-nums">{course.credits}</span>
-                  {!isMandatoryCategory && (
+                  {!isReadOnlySelection && (
                     <button
                       onClick={() => toggleCourse(category.id, course.id)}
                       className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
@@ -109,7 +111,7 @@ const Preview = () => {
           className="inline-flex items-center gap-2 h-10 px-5 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
         >
           <Edit className="w-4 h-4" />
-          {isMandatoryCategory ? "View Courses" : "Edit Selections"}
+          {isEngineeringMinorPathOnly ? "Change Pathway" : isMandatoryCategory ? "View Courses" : "Edit Selections"}
         </button>
         {!consentGiven ? (
           <button
