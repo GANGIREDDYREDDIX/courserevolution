@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { mockStudent, type Student } from "@/data/mockStudent";
+import {
+  mockStudent,
+  type Student,
+  type DemoStudentProfileId,
+  getDemoStudentByProfile,
+  isValidDemoStudentProfile,
+} from "@/data/mockStudent";
 import { mockCategories, type Category } from "@/data/mockCategories";
 import type { EduRevSelection } from "@/data/eduRevTypes";
 
@@ -14,6 +20,7 @@ export interface CategorySelection {
 
 interface StudentContextValue {
   student: Student;
+  selectedDemoProfileId: DemoStudentProfileId | null;
   categories: Category[];
   selections: Record<string, CategorySelection>;
   eduRevSelections: Record<string, EduRevSelection>; // courseId -> EduRevSelection
@@ -35,6 +42,7 @@ interface StudentContextValue {
   setHasJoinedEduRev: (value: boolean) => void;
   setSelectedEduRevPathway: (value: EduRevPathwayId | null) => void;
   setSelectedEduRevTier: (value: EduRevTierId | null) => void;
+  setDemoStudentProfile: (profileId: DemoStudentProfileId) => void;
 }
 
 const StudentContext = createContext<StudentContextValue | null>(null);
@@ -44,6 +52,18 @@ const EDU_REV_STORAGE_KEY = "course-mapper-edu-rev";
 const EDU_REV_JOINED_STORAGE_KEY = "course-mapper-edu-rev-joined";
 const EDU_REV_PATHWAY_STORAGE_KEY = "course-mapper-edu-rev-pathway";
 const EDU_REV_TIER_STORAGE_KEY = "course-mapper-edu-rev-tier";
+const DEMO_PROFILE_STORAGE_KEY = "course-navigator-demo-profile";
+const FLOW_INPUTS_STORAGE_KEY = "course-navigator-flow-inputs";
+
+function loadDemoProfile(): DemoStudentProfileId | null {
+  try {
+    const raw = localStorage.getItem(DEMO_PROFILE_STORAGE_KEY);
+    if (!raw) return null;
+    return isValidDemoStudentProfile(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
 
 function normalizeSelections(raw: Record<string, CategorySelection>): Record<string, CategorySelection> {
   const normalized: Record<string, CategorySelection> = { ...raw };
@@ -109,6 +129,11 @@ function loadEduRevTier(): EduRevTierId | null {
 }
 
 export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [selectedDemoProfileId, setSelectedDemoProfileId] = useState<DemoStudentProfileId | null>(loadDemoProfile);
+  const [student, setStudent] = useState<Student>(() => {
+    const saved = loadDemoProfile();
+    return saved ? getDemoStudentByProfile(saved) : mockStudent;
+  });
   const [selections, setSelections] = useState<Record<string, CategorySelection>>(loadSelections);
   const [eduRevSelections, setEduRevSelections] = useState<Record<string, EduRevSelection>>(loadEduRevSelections);
   const [hasJoinedEduRev, setHasJoinedEduRev] = useState<boolean>(loadEduRevJoined);
@@ -146,6 +171,17 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
     localStorage.setItem(EDU_REV_TIER_STORAGE_KEY, selectedEduRevTier);
   }, [selectedEduRevTier]);
+
+  const setDemoStudentProfile = (profileId: DemoStudentProfileId) => {
+    const nextStudent = getDemoStudentByProfile(profileId);
+    setSelectedDemoProfileId(profileId);
+    setStudent(nextStudent);
+    localStorage.setItem(DEMO_PROFILE_STORAGE_KEY, profileId);
+    localStorage.setItem(
+      FLOW_INPUTS_STORAGE_KEY,
+      JSON.stringify({ cgpa: String(nextStudent.cgpa), marks: String(nextStudent.marks) })
+    );
+  };
 
   const getSelection = (catId: string): CategorySelection =>
     selections[catId] || { selectedCourseIds: [], status: "not_started" };
@@ -316,7 +352,8 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <StudentContext.Provider
       value={{
-        student: mockStudent,
+        student,
+        selectedDemoProfileId,
         categories: mockCategories,
         selections,
         eduRevSelections,
@@ -338,6 +375,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setHasJoinedEduRev,
         setSelectedEduRevPathway,
         setSelectedEduRevTier,
+        setDemoStudentProfile,
       }}
     >
       {children}

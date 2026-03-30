@@ -2,14 +2,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 
-interface EduRevDisclaimerModalProps {
+interface EduRevDisclaimerModalEligibleProps {
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  isHighPerformanceFlow?: boolean;
 }
 
-const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlow }: EduRevDisclaimerModalProps) => {
+const EduRevDisclaimerModalEligible = ({ open, onConfirm, onCancel }: EduRevDisclaimerModalEligibleProps) => {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl">
@@ -55,4 +54,4 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlo
   );
 };
 
-export default EduRevDisclaimerModal;
+export default EduRevDisclaimerModalEligible;

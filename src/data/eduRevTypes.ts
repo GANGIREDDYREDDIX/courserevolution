@@ -21,8 +21,14 @@ export interface EduRevSelection {
   courseId: string;
   categoryId: string;
   optionType: EduRevOptionType | null;
+  initiativeId?: string | null;
+  initiativeTitle?: string | null;
+  initiativeDescription?: string | null;
   achievement: Achievement | null;
   status: "draft" | "finalized";
+  verificationStatus?: "not_submitted" | "submitted" | "verified";
+  submittedAt?: string | null;
+  verifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

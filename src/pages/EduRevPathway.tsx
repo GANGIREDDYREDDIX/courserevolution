@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import EduRevDisclaimerModal from "@/components/edurev/EduRevDisclaimerModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, CheckCircle2, CircleAlert, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
 
@@ -35,24 +36,6 @@ const pathways: Array<{
     color: "from-purple-500 to-purple-600",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200"
-  },
-  {
-    id: "higher_studies",
-    title: "Higher Studies",
-    description: "Prepare for advanced degrees and research opportunities",
-    icon: "📚",
-    color: "from-indigo-500 to-indigo-600",
-    bgColor: "bg-indigo-50",
-    borderColor: "border-indigo-200"
-  },
-  {
-    id: "govt_exams",
-    title: "Government Exams",
-    description: "Prepare for competitive government examinations",
-    icon: "🎯",
-    color: "from-orange-500 to-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-200"
   }
 ];
 
@@ -79,6 +62,21 @@ const salaryToTierId: Record<TierPlan["salary"], EduRevTierId> = {
   "₹50 LPA Track": "tier_50",
   "₹30 LPA Track": "tier_30",
   "₹20 LPA Track": "tier_20",
+};
+
+const TIER_RULES: Record<EduRevTierId, { label: string; check: (cgpa: number, marks: number) => boolean }> = {
+  tier_50: {
+    label: "CGPA ≥ 9.0 or Marks ≥ 90%",
+    check: (cgpa, marks) => cgpa >= 9 || marks >= 90,
+  },
+  tier_30: {
+    label: "CGPA ≥ 8.0 or Marks ≥ 75%",
+    check: (cgpa, marks) => cgpa >= 8 || marks >= 75,
+  },
+  tier_20: {
+    label: "CGPA ≥ 7.0 or Marks ≥ 65%",
+    check: (cgpa, marks) => cgpa >= 7 || marks >= 65,
+  },
 };
 
 type PathwayDetails = {
@@ -475,9 +473,35 @@ const buildPathwayDetails = (minorLabel: string): Record<PathwayId, PathwayDetai
 });
 
 const EduRevPathway = () => {
+    // ...existing code...
+
   const navigate = useNavigate();
   const location = useLocation();
-  const { selections, setSelectedEduRevPathway, setSelectedEduRevTier } = useStudent();
+  const { student, selections, setSelectedEduRevPathway, setSelectedEduRevTier } = useStudent();
+  const flowState = location.state as { cgpa?: number; marks?: number } | null;
+  const academicCgpa = typeof flowState?.cgpa === "number" && Number.isFinite(flowState?.cgpa) ? flowState.cgpa : student.cgpa;
+  const academicMarks = typeof flowState?.marks === "number" && Number.isFinite(flowState?.marks) ? flowState.marks : student.marks;
+
+  const tierEligibility = useMemo(() => {
+    return {
+      tier_50: TIER_RULES.tier_50.check(academicCgpa, academicMarks),
+      tier_30: TIER_RULES.tier_30.check(academicCgpa, academicMarks),
+      tier_20: TIER_RULES.tier_20.check(academicCgpa, academicMarks),
+    };
+  }, [academicCgpa, academicMarks]);
+  const eligibleTierCount = Object.values(tierEligibility).filter(Boolean).length;
+
+  // If student is not eligible for any tier, redirect to https://edurev.vercel.app/
+  useEffect(() => {
+    // Only redirect if still on /edurev-pathway (prevents redirect after navigation)
+    if (
+      eligibleTierCount === 0 &&
+      window.location.pathname === "/edurev-pathway"
+    ) {
+      window.location.replace("https://edurev.vercel.app/");
+    }
+  }, [eligibleTierCount]);
+
   const initialPathway = useMemo<PathwayId | null>(() => {
     const candidate = (location.state as { selectedPathway?: PathwayId } | null)?.selectedPathway;
     return pathways.some((pathway) => pathway.id === candidate) ? (candidate as PathwayId) : null;
@@ -489,6 +513,20 @@ const EduRevPathway = () => {
   }, [location.state]);
   const [selectedPathway, setSelectedPathway] = useState<PathwayId | null>(initialPathway);
   const [selectedTier, setSelectedTier] = useState<EduRevTierId | null>(initialTier);
+
+
+
+
+  // ...existing code...
+
+
+
+  // If student is not eligible for any tier, redirect to https://edurev.vercel.app/
+  useEffect(() => {
+    if (eligibleTierCount === 0) {
+      window.location.replace("https://edurev.vercel.app/");
+    }
+  }, [eligibleTierCount]);
 
   const { selectedMinorKey, selectedMinorLabel } = useMemo(() => {
     const minorIds = selections["cat-4"]?.selectedCourseIds || [];
@@ -513,6 +551,16 @@ const EduRevPathway = () => {
   const pathwayDetailsMap = useMemo(() => buildPathwayDetails(selectedMinorLabel), [selectedMinorLabel]);
   const selectedPathwayDetails = selectedPathway ? pathwayDetailsMap[selectedPathway] : null;
 
+  // If student is not eligible for any tier, redirect to https://edurev.vercel.app/
+  useEffect(() => {
+    if (eligibleTierCount === 0) {
+      window.location.replace("https://edurev.vercel.app/");
+    }
+  }, [eligibleTierCount]);
+
+  const readinessScore = Math.min(100, Math.round((academicCgpa / 10) * 55 + (academicMarks / 100) * 45));
+  const readinessLabel = readinessScore >= 85 ? "Excellent" : readinessScore >= 70 ? "Strong" : "Growing";
+
   const handleOpenTierDetail = (tier: TierPlan) => {
     if (!selectedPathwayMeta || !selectedPathwayDetails) return;
 
@@ -530,8 +578,10 @@ const EduRevPathway = () => {
     });
   };
 
+
+
   const handleContinue = () => {
-    if (selectedPathway && selectedTier) {
+    if (selectedPathway && selectedTier && tierEligibility[selectedTier]) {
       setSelectedEduRevPathway(selectedPathway);
       setSelectedEduRevTier(selectedTier);
       navigate("/edurev-overview", { state: { pathway: selectedPathway, tier: selectedTier } });
@@ -539,23 +589,104 @@ const EduRevPathway = () => {
   };
 
   return (
-    <div className="py-8 max-w-4xl mx-auto animate-fade-in">
+    <>
+      <div className="py-8 max-w-5xl mx-auto animate-fade-in">
       <div className="mb-8">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm font-semibold">Go Back</span>
         </button>
 
-        <h1 className="text-4xl font-bold text-foreground mb-3">Choose Your Pathway</h1>
-        <p className="text-lg text-muted-foreground">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2">
+          Learning by Doing
+        </h1>
+        <p className="text-base md:text-lg text-muted-foreground">
           Select the pathway that best aligns with your career goals and aspirations.
         </p>
+
+        <div className="mt-5 rounded-2xl border border-border bg-card shadow-sm p-4 md:p-5">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Student Eligibility Snapshot</p>
+              <h2 className="text-xl font-bold text-foreground mt-1 truncate">{student.name}</h2>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{student.program}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Enrollment ID: <span className="font-semibold text-foreground">{student.enrollmentId}</span>
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full lg:w-auto">
+              <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">CGPA</p>
+                <p className="text-sm font-extrabold text-foreground">{academicCgpa.toFixed(1)}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">Marks</p>
+                <p className="text-sm font-extrabold text-foreground">{academicMarks}%</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">Year</p>
+                <p className="text-sm font-extrabold text-foreground">{student.year}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">Semester</p>
+                <p className="text-sm font-extrabold text-foreground">{student.term}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-border bg-secondary/20 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold text-foreground">Readiness Score</p>
+              <p className="text-xs font-bold text-primary">{readinessScore}% · {readinessLabel}</p>
+            </div>
+            <div className="mt-2 h-2.5 rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${readinessScore}%` }}
+              />
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Eligible tracks unlocked: <span className="font-semibold text-foreground">{eligibleTierCount}/3</span>
+            </p>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
+            {(Object.keys(TIER_RULES) as EduRevTierId[]).map((tierId) => {
+              const isEligible = tierEligibility[tierId];
+              return (
+                <div
+                  key={tierId}
+                  className={`rounded-lg border-l-4 border px-3 py-2 ${isEligible ? "border-l-emerald-500 border-emerald-200 bg-emerald-50" : "border-l-amber-500 border-amber-200 bg-amber-50"}`}
+                >
+                  <p className="text-xs font-bold text-foreground">
+                    {tierId === "tier_50" ? "₹50 LPA" : tierId === "tier_30" ? "₹30 LPA" : "₹20 LPA"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{TIER_RULES[tierId].label}</p>
+                  <p className={`mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${isEligible ? "text-emerald-700" : "text-amber-700"}`}>
+                    {isEligible ? <CheckCircle2 className="w-3.5 h-3.5" /> : <CircleAlert className="w-3.5 h-3.5" />}
+                    {isEligible ? "Eligible" : "Not eligible"}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-3">
+            Eligibility logic: You can choose only tracks where at least one criterion is satisfied.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">Choose Pathway</h2>
+        <p className="text-xs text-muted-foreground">Step 1 of 2</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
         {pathways.map((pathway) => (
           <motion.button
             key={pathway.id}
@@ -569,17 +700,19 @@ const EduRevPathway = () => {
             }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`text-left rounded-2xl border-2 p-6 transition-all ${
+            className={`group text-left rounded-2xl border p-5 transition-all ${
               selectedPathway === pathway.id
-                ? `${pathway.borderColor} ${pathway.bgColor} ring-2 ring-primary shadow-lg`
-                : `border-gray-200 bg-card hover:border-gray-300 hover:shadow-md`
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border bg-card hover:border-primary/40 hover:shadow-sm"
             }`}
           >
             <div className="flex items-start gap-4">
-              <span className="text-4xl">{pathway.icon}</span>
+              <span className="grid place-items-center w-12 h-12 rounded-lg bg-secondary border border-border text-2xl transition-transform group-hover:scale-105">
+                {pathway.icon}
+              </span>
               <div className="flex-1 min-w-0">
-                <h2 className="text-2xl font-bold text-foreground">{pathway.title}</h2>
-                <p className="text-sm text-muted-foreground mt-2">{pathway.description}</p>
+                <h2 className="text-xl font-bold text-foreground">{pathway.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1.5">{pathway.description}</p>
               </div>
               {selectedPathway === pathway.id && (
                 <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1">
@@ -592,7 +725,7 @@ const EduRevPathway = () => {
       </div>
 
       {selectedPathwayMeta && (
-        <div className="mb-8 rounded-2xl border border-border bg-card p-5 md:p-6">
+          <div className="mb-8 rounded-2xl border border-border bg-card p-5 md:p-6 shadow-sm">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
             {selectedPathwayMeta.title} Plan for {selectedMinorLabel}
           </h2>
@@ -604,7 +737,7 @@ const EduRevPathway = () => {
           </p>
 
           {selectedPathwayDetails && (
-            <div className="mb-5 rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="mb-5 rounded-xl border border-border bg-secondary/20 p-4">
               <p className="text-sm font-semibold text-foreground mb-2">Category Details & Parameters</p>
               <p className="text-sm text-muted-foreground mb-3">{selectedPathwayDetails.overview}</p>
 
@@ -636,6 +769,7 @@ const EduRevPathway = () => {
                 key={tier.salary}
                 onClick={() => {
                   const nextTier = salaryToTierId[tier.salary];
+                  if (!tierEligibility[nextTier]) return;
                   setSelectedTier(nextTier);
                   setSelectedEduRevTier(nextTier);
                 }}
@@ -645,22 +779,31 @@ const EduRevPathway = () => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
                     const nextTier = salaryToTierId[tier.salary];
+                    if (!tierEligibility[nextTier]) return;
                     setSelectedTier(nextTier);
                     setSelectedEduRevTier(nextTier);
                   }
                 }}
-                className={`rounded-xl border p-4 text-left transition-all hover:shadow-md cursor-pointer ${
-                  selectedTier === salaryToTierId[tier.salary]
-                    ? "border-primary ring-2 ring-primary/25 bg-primary/5"
-                    : "border-border bg-secondary/20 hover:border-primary/40"
+                className={`rounded-xl border p-4 text-left transition-all ${
+                  !tierEligibility[salaryToTierId[tier.salary]]
+                    ? "border-amber-200 bg-amber-50 opacity-80 cursor-not-allowed"
+                    : selectedTier === salaryToTierId[tier.salary]
+                      ? "border-primary ring-2 ring-primary/25 bg-primary/5 shadow-md cursor-pointer"
+                      : "border-border bg-card hover:border-primary/40 hover:shadow-sm cursor-pointer"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <p className="text-sm font-bold text-primary">{tier.salary}</p>
-                  {selectedTier === salaryToTierId[tier.salary] && (
+                  {!tierEligibility[salaryToTierId[tier.salary]] ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                      <Lock className="w-3 h-3" />
+                      Locked
+                    </span>
+                  ) : selectedTier === salaryToTierId[tier.salary] ? (
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary text-white">Selected</span>
-                  )}
+                  ) : null}
                 </div>
+                <p className="text-[11px] text-muted-foreground mb-2">{TIER_RULES[salaryToTierId[tier.salary]].label}</p>
                 <p className="text-base font-semibold text-foreground mb-2">{tier.role}</p>
                 <p className="text-xs text-muted-foreground mb-3">
                   <span className="font-semibold text-foreground">Data Focus:</span> {tier.dataFocus}
@@ -673,16 +816,25 @@ const EduRevPathway = () => {
                     ))}
                   </ul>
                 </div>
+
+                {!tierEligibility[salaryToTierId[tier.salary]] && (
+                  <p className="mt-3 text-[11px] font-semibold text-amber-700 bg-amber-100/70 rounded-md px-2 py-1">
+                    Improve CGPA or marks to unlock this track.
+                  </p>
+                )}
+
                 <button
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
                     const nextTier = salaryToTierId[tier.salary];
+                    if (!tierEligibility[nextTier]) return;
                     setSelectedTier(nextTier);
                     setSelectedEduRevTier(nextTier);
                     handleOpenTierDetail(tier);
                   }}
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80"
+                  disabled={!tierEligibility[salaryToTierId[tier.salary]]}
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 disabled:text-muted-foreground disabled:cursor-not-allowed"
                 >
                   Open detailed plan
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -696,22 +848,26 @@ const EduRevPathway = () => {
       <div className="flex items-center justify-between gap-4">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 h-10 px-5 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
+          className="inline-flex items-center gap-2 h-10 px-5 rounded-lg border border-border bg-card text-foreground text-sm font-semibold hover:bg-secondary/60 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
 
-        <Button
-          onClick={handleContinue}
-          disabled={!selectedPathway || !selectedTier}
-          className="inline-flex items-center gap-2 h-10 px-6 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Continue to Course Overview
-          <ArrowRight className="w-4 h-4" />
-        </Button>
+        {/* Only show the button if at least one tier is eligible */}
+        {eligibleTierCount > 0 && (
+          <Button
+            onClick={handleContinue}
+            disabled={!selectedPathway || !selectedTier || !tierEligibility[selectedTier]}
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary hover:bg-primary/90 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Continue to Course Overview
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     </div>
+    </>
   );
 };
 

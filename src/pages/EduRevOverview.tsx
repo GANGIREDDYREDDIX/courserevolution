@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import EduRevDisclaimerModalEligible from "@/components/edurev/EduRevDisclaimerModalEligible";
+import EduRevDisclaimerModalNonEligible from "@/components/edurev/EduRevDisclaimerModalNonEligible";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { motion } from "framer-motion";
@@ -303,6 +305,173 @@ const termDetails: Record<number, {
   }
 };
 
+type OutClassCategoryType = "Projects" | "Certifications" | "Internship";
+type FacultyInitiative = {
+  id: string;
+  title: string;
+  description: string;
+  expectedOutcome: string;
+  credits?: number;
+};
+
+const facultyInitiativesByCourseCode: Record<string, Partial<Record<OutClassCategoryType, FacultyInitiative[]>>> = {
+  CSE111: {
+    Projects: [
+      {
+        id: "cse111-proj-1",
+        title: "Linux Setup & Git Portfolio",
+        description: "Set up Linux environment, create a GitHub repo strategy, and publish a personal portfolio page.",
+        expectedOutcome: "Portfolio URL + Git workflow evidence",
+      },
+      {
+        id: "cse111-proj-2",
+        title: "Mini CLI Utility",
+        description: "Build a Python command-line utility with argument handling and README documentation.",
+        expectedOutcome: "Working CLI project with demo video",
+      },
+    ],
+    Certifications: [
+      {
+        id: "cse111-cert-1",
+        title: "PCEP - Python Institute",
+        description: "Complete Python basics modules and attempt the PCEP practice assessments.",
+        expectedOutcome: "Practice score report + completion proof",
+      },
+    ],
+    Internship: [
+      {
+        id: "cse111-int-1",
+        title: "Internship Readiness Sprint",
+        description: "Prepare resume, LinkedIn, and 20 coding questions targeted for first internship applications.",
+        expectedOutcome: "Ready profile + application tracker",
+      },
+    ],
+  },
+  CHE110: {
+    Projects: [
+      {
+        id: "che110-proj-1",
+        title: "Materials & Corrosion Case Study",
+        description: "Create a mini engineering case study on corrosion prevention for real-world systems.",
+        expectedOutcome: "Case report + presentation deck",
+      },
+    ],
+    Certifications: [
+      {
+        id: "che110-cert-1",
+        title: "Engineering Chemistry Micro-Credential",
+        description: "Complete module on applied chemistry in manufacturing and lab safety workflows.",
+        expectedOutcome: "Certificate + quiz report",
+      },
+    ],
+  },
+  INT306: {
+    Projects: [
+      {
+        id: "int306-proj-1",
+        title: "SQL Performance Dashboard",
+        description: "Design schema, write optimized queries, and build a DB insights dashboard.",
+        expectedOutcome: "SQL scripts + performance summary",
+      },
+    ],
+    Internship: [
+      {
+        id: "int306-int-1",
+        title: "Database Internship Task Pack",
+        description: "Hands-on assignment pack with data cleaning, normalization, and reporting tasks.",
+        expectedOutcome: "Task completion sheet + mentor review",
+      },
+    ],
+  },
+  INT335: {
+    Projects: [
+      {
+        id: "int335-proj-1",
+        title: "Cloud Deployment Project",
+        description: "Deploy a containerized app on AWS/Azure with basic CI/CD automation.",
+        expectedOutcome: "Live deployment + architecture document",
+      },
+    ],
+    Certifications: [
+      {
+        id: "int335-cert-1",
+        title: "Cloud Fundamentals Certification",
+        description: "Faculty-curated prep track for beginner cloud certification milestones.",
+        expectedOutcome: "Mock test score + completion badge",
+      },
+    ],
+  },
+};
+
+// Demo data: items marked complete only after faculty verification.
+const facultyVerifiedInitiatives: Record<string, string[]> = {
+  "Projects::CSE111": ["cse111-proj-1"],
+  "Certifications::INT335": ["int335-cert-1"],
+};
+
+const buildFallbackFacultyInitiatives = (
+  courseCode: string,
+  category: OutClassCategoryType,
+  courseTitle?: string
+): FacultyInitiative[] => {
+  const displayName = courseTitle || `Course ${courseCode}`;
+
+  if (category === "Projects") {
+    return [
+      {
+        id: `${courseCode.toLowerCase()}-proj-demo-1`,
+        title: `${courseCode} Applied Mini Project`,
+        description: `Build an applied mini project aligned to ${displayName} outcomes with implementation notes and screenshots.`,
+        expectedOutcome: "Project repository + short demo video",
+        credits: 2,
+      },
+      {
+        id: `${courseCode.toLowerCase()}-proj-demo-2`,
+        title: `${courseCode} Portfolio Artifact`,
+        description: `Create a portfolio-ready artifact demonstrating problem statement, approach, and measurable results for ${displayName}.`,
+        expectedOutcome: "Portfolio entry + impact summary",
+        credits: 2,
+      },
+    ];
+  }
+
+  if (category === "Certifications") {
+    return [
+      {
+        id: `${courseCode.toLowerCase()}-cert-demo-1`,
+        title: `${courseCode} Domain Certification Track`,
+        description: `Faculty-curated certification prep modules mapped to ${displayName} fundamentals and assessment pattern.`,
+        expectedOutcome: "Mock test scorecard + completion certificate",
+        credits: 1,
+      },
+      {
+        id: `${courseCode.toLowerCase()}-cert-demo-2`,
+        title: `${courseCode} Skill Validation Quiz Pack`,
+        description: `Complete supervised quiz pack and practical checkpoints to validate core skills from ${displayName}.`,
+        expectedOutcome: "Validated skill report",
+        credits: 1,
+      },
+    ];
+  }
+
+  return [
+    {
+      id: `${courseCode.toLowerCase()}-int-demo-1`,
+      title: `${courseCode} Internship Task Simulation`,
+      description: `Solve mentor-reviewed internship-style tasks based on ${displayName} and submit weekly progress logs.`,
+      expectedOutcome: "Task sheet + mentor feedback",
+      credits: 2,
+    },
+    {
+      id: `${courseCode.toLowerCase()}-int-demo-2`,
+      title: `${courseCode} Industry Readiness Sprint`,
+      description: `Complete resume-proof work samples and interview-ready documentation linked to ${displayName}.`,
+      expectedOutcome: "Readiness dossier + submission evidence",
+      credits: 2,
+    },
+  ];
+};
+
 const EduRevOverview = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
@@ -317,9 +486,24 @@ const EduRevOverview = () => {
     selectedEduRevTier,
     setSelectedEduRevPathway,
     setSelectedEduRevTier,
+    student,
   } = useStudent();
+
+  // Modal state
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
+
+  // Eligibility logic (adjust as needed)
+  const isEligible = (student?.cgpa ?? 0) >= 8 || (student?.marks ?? 0) >= 75;
   const [selectedTerm, setSelectedTerm] = useState<number>(1);
   const [activeOutClassCategory, setActiveOutClassCategory] = useState<string | null>(null);
+  const [outClassCategoryCourseSelection, setOutClassCategoryCourseSelection] = useState<Record<string, string[]>>({});
+  const [activeOutClassCourseCode, setActiveOutClassCourseCode] = useState<string | null>(null);
+  const [selectedInitiatives, setSelectedInitiatives] = useState<Record<string, string[]>>({});
+  const [submittedInitiatives, setSubmittedInitiatives] = useState<Record<string, string[]>>({});
+  const [progressTrackerOpen, setProgressTrackerOpen] = useState(false);
+  const [proofUploads, setProofUploads] = useState<Record<string, { fileName: string; uploadedAt: string }>>({});
+  const [submitDisclaimerOpen, setSubmitDisclaimerOpen] = useState(false);
+  const [pendingSubmitContext, setPendingSubmitContext] = useState<{ category: string } | null>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -498,7 +682,249 @@ const EduRevOverview = () => {
   }, {} as Record<string, typeof pathwayOutClass>);
   const groupedOutClassEntries = Object.entries(groupedOutClassMap);
   const activeOutClassItems = activeOutClassCategory ? groupedOutClassMap[activeOutClassCategory] || [] : [];
+  const activeTermSelectedCourses = coursesByTerm[selectedTerm] || [];
+  const activeTermCourseCodes = activeTermSelectedCourses.map((course) => course.courseCode);
+  const courseNameByCode = selectedCourses.reduce((acc, course) => {
+    acc[course.courseCode] = course.name;
+    return acc;
+  }, {} as Record<string, string>);
   const termYearLabel = `Year ${Math.ceil(selectedTerm / 2)} Sem ${selectedTerm % 2 === 1 ? 1 : 2}`;
+
+  useEffect(() => {
+    if (!activeOutClassCategory) {
+      setActiveOutClassCourseCode(null);
+      return;
+    }
+
+    const fromSelection = outClassCategoryCourseSelection[activeOutClassCategory]?.[0] || null;
+    const firstAvailable = activeTermCourseCodes[0] || null;
+    const fallbackCode = fromSelection || firstAvailable;
+
+    if (!activeOutClassCourseCode) {
+      setActiveOutClassCourseCode(fallbackCode);
+      return;
+    }
+
+    if (!activeTermCourseCodes.includes(activeOutClassCourseCode)) {
+      setActiveOutClassCourseCode(fallbackCode);
+    }
+  }, [
+    activeOutClassCategory,
+    activeOutClassCourseCode,
+    activeTermCourseCodes,
+    outClassCategoryCourseSelection,
+  ]);
+
+  const getCourseCategoryKey = (category: string, courseCode: string) => `${category}::${courseCode}`;
+
+  const previewOutClassCourseCode = (courseCode: string) => {
+    setActiveOutClassCourseCode(courseCode);
+  };
+
+  const toggleOutClassCourseSelection = (category: string, courseCode: string) => {
+    setOutClassCategoryCourseSelection((prev) => {
+      const existing = prev[category] || [];
+      const next = existing.includes(courseCode)
+        ? existing.filter((code) => code !== courseCode)
+        : [...existing, courseCode];
+      return { ...prev, [category]: next };
+    });
+  };
+
+  const activeFacultyCategory =
+    activeOutClassCategory === "Projects" || activeOutClassCategory === "Certifications" || activeOutClassCategory === "Internship"
+      ? (activeOutClassCategory as OutClassCategoryType)
+      : null;
+
+  const getCategoryTypeIfTrackable = (category: string): OutClassCategoryType | null => {
+    if (category === "Projects" || category === "Certifications" || category === "Internship") {
+      return category;
+    }
+    return null;
+  };
+
+  const getInitiativesForCourseAndCategory = (courseCode: string, category: OutClassCategoryType) => {
+    return (
+      facultyInitiativesByCourseCode[courseCode]?.[category] ||
+      buildFallbackFacultyInitiatives(courseCode, category, courseNameByCode[courseCode])
+    );
+  };
+
+  const getInitiativeCredits = (initiative: FacultyInitiative | undefined, category: OutClassCategoryType) => {
+    if (!initiative) return category === "Projects" || category === "Internship" ? 2 : 1;
+    if (typeof initiative.credits === "number") return initiative.credits;
+    return category === "Projects" || category === "Internship" ? 2 : 1;
+  };
+
+  const activeFacultyInitiatives =
+    activeFacultyCategory && activeOutClassCourseCode
+      ? getInitiativesForCourseAndCategory(activeOutClassCourseCode, activeFacultyCategory)
+      : [];
+
+  const toggleInitiativeSelection = (category: string, courseCode: string, initiativeId: string) => {
+    const key = getCourseCategoryKey(category, courseCode);
+    setSelectedInitiatives((prev) => {
+      const existing = prev[key] || [];
+      const next = existing.includes(initiativeId)
+        ? existing.filter((id) => id !== initiativeId)
+        : [...existing, initiativeId];
+      return { ...prev, [key]: next };
+    });
+  };
+
+  const getSelectedInitiativeCountForCategory = (category: string) => {
+    const selectedCodes = outClassCategoryCourseSelection[category] || [];
+    const fallbackCodes = selectedCodes.length > 0 ? selectedCodes : activeOutClassCourseCode ? [activeOutClassCourseCode] : [];
+
+    return fallbackCodes.reduce((sum, code) => {
+      const key = getCourseCategoryKey(category, code);
+      return sum + (selectedInitiatives[key] || []).length;
+    }, 0);
+  };
+
+  const submitSelectedInitiativesForCategory = (category: string) => {
+    const selectedCodes = outClassCategoryCourseSelection[category] || [];
+    const targetCodes = selectedCodes.length > 0 ? selectedCodes : activeOutClassCourseCode ? [activeOutClassCourseCode] : [];
+
+    if (targetCodes.length === 0) {
+      toast.error("Select at least one course code before submitting");
+      return;
+    }
+
+    const totalPicked = targetCodes.reduce((sum, code) => {
+      const key = getCourseCategoryKey(category, code);
+      return sum + (selectedInitiatives[key] || []).length;
+    }, 0);
+
+    if (totalPicked === 0) {
+      toast.error("Select at least one initiative before submitting");
+      return;
+    }
+
+    setSubmittedInitiatives((prev) => {
+      const next = { ...prev };
+      targetCodes.forEach((code) => {
+        const key = getCourseCategoryKey(category, code);
+        const picked = selectedInitiatives[key] || [];
+        if (picked.length === 0) return;
+        const existing = next[key] || [];
+        next[key] = Array.from(new Set([...existing, ...picked]));
+      });
+      return next;
+    });
+
+    setSelectedInitiatives((prev) => {
+      const next = { ...prev };
+      targetCodes.forEach((code) => {
+        const key = getCourseCategoryKey(category, code);
+        next[key] = [];
+      });
+      return next;
+    });
+
+    toast.success(`Submitted ${totalPicked} initiative(s) across ${targetCodes.length} course code(s) for faculty verification`);
+  };
+
+  const openSubmitDisclaimer = (category: string) => {
+    const totalPicked = getSelectedInitiativeCountForCategory(category);
+    if (totalPicked === 0) {
+      toast.error("Select at least one initiative before submitting");
+      return;
+    }
+    setPendingSubmitContext({ category });
+    setSubmitDisclaimerOpen(true);
+  };
+
+  const confirmSubmitWithDisclaimer = () => {
+    if (!pendingSubmitContext) return;
+    submitSelectedInitiativesForCategory(pendingSubmitContext.category);
+    setSubmitDisclaimerOpen(false);
+    setPendingSubmitContext(null);
+  };
+
+  const handleProofUpload = (
+    category: string,
+    courseCode: string,
+    initiativeId: string,
+    file: File | null
+  ) => {
+    if (!file) return;
+    const key = `${getCourseCategoryKey(category, courseCode)}::${initiativeId}`;
+    setProofUploads((prev) => ({
+      ...prev,
+      [key]: {
+        fileName: file.name,
+        uploadedAt: new Date().toLocaleString(),
+      },
+    }));
+    toast.success("Proof uploaded successfully");
+  };
+
+  const selectedOutClassCodes = Array.from(new Set(Object.values(outClassCategoryCourseSelection).flat()));
+  const termTotalCredits = activeTermSelectedCourses.reduce((sum, course) => sum + course.credits, 0);
+  const activeTermCourseCodeSet = new Set(activeTermSelectedCourses.map((course) => course.courseCode));
+  const courseCreditsByCode = activeTermSelectedCourses.reduce((acc, course) => {
+    acc[course.courseCode] = course.credits;
+    return acc;
+  }, {} as Record<string, number>);
+  const committedInitiativeRefs = new Set<string>();
+
+  [selectedInitiatives, submittedInitiatives].forEach((source) => {
+    Object.entries(source).forEach(([categoryCourseKey, initiativeIds]) => {
+      const [category, courseCode] = categoryCourseKey.split("::");
+      const categoryType = getCategoryTypeIfTrackable(category);
+      if (!categoryType || !activeTermCourseCodeSet.has(courseCode)) return;
+
+      initiativeIds.forEach((initiativeId) => {
+        committedInitiativeRefs.add(`${categoryCourseKey}::${initiativeId}`);
+      });
+    });
+  });
+
+  const committedCreditsByCourse = Array.from(committedInitiativeRefs).reduce((acc, ref) => {
+    const [category, courseCode, initiativeId] = ref.split("::");
+    const categoryType = getCategoryTypeIfTrackable(category);
+    if (!categoryType) return acc;
+
+    const initiative = getInitiativesForCourseAndCategory(courseCode, categoryType).find((item) => item.id === initiativeId);
+    const initiativeCredits = getInitiativeCredits(initiative, categoryType);
+    acc[courseCode] = (acc[courseCode] || 0) + initiativeCredits;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const outClassCommittedCredits = Math.min(
+    termTotalCredits,
+    Object.entries(committedCreditsByCourse).reduce((sum, [courseCode, credits]) => {
+      const maxForCourse = courseCreditsByCode[courseCode] || 0;
+      return sum + Math.min(credits, maxForCourse);
+    }, 0)
+  );
+  const inClassRequiredCredits = Math.max(termTotalCredits - outClassCommittedCredits, 0);
+
+  const trackerRows = Object.entries(submittedInitiatives).flatMap(([categoryCourseKey, initiativeIds]) => {
+    const [category, courseCode] = categoryCourseKey.split("::");
+    const categoryType = getCategoryTypeIfTrackable(category);
+    if (!categoryType || !activeTermCourseCodeSet.has(courseCode)) return [];
+
+    const allInitiatives = getInitiativesForCourseAndCategory(courseCode, categoryType);
+    return initiativeIds.map((initiativeId) => {
+      const initiative = allInitiatives.find((item) => item.id === initiativeId);
+      return {
+        category,
+        courseCode,
+        initiativeId,
+        initiativeTitle: initiative?.title || initiativeId,
+        initiativeCredits: getInitiativeCredits(initiative, categoryType),
+        verified: (facultyVerifiedInitiatives[categoryCourseKey] || []).includes(initiativeId),
+        proof: proofUploads[`${categoryCourseKey}::${initiativeId}`],
+      };
+    });
+  });
+  const verifiedCount = trackerRows.filter((row) => row.verified).length;
+  const completedRows = trackerRows.filter((row) => row.verified);
+  const pendingRows = trackerRows.filter((row) => !row.verified);
+  const completedCredits = completedRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
+  const pendingCredits = pendingRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
 
   const curriculumRows = selectedCourses
     .slice()
@@ -514,6 +940,54 @@ const EduRevOverview = () => {
         credits: course.credits,
       };
     });
+
+  const handleDownloadProgressPdf = () => {
+    const doc = new jsPDF({ orientation: "portrait" });
+    const title = `Semester Progress Tracker - ${termYearLabel}`;
+    const generatedAt = `Generated: ${new Date().toLocaleString()}`;
+
+    doc.setFontSize(16);
+    doc.text(title, 14, 14);
+    doc.setFontSize(10);
+    doc.text(generatedAt, 14, 20);
+
+    autoTable(doc, {
+      startY: 26,
+      head: [["Metric", "Value"]],
+      body: [
+        ["Total Credits (Term)", String(termTotalCredits)],
+        ["Out-Class Committed Credits", String(outClassCommittedCredits)],
+        ["In-Class Required Credits", String(inClassRequiredCredits)],
+        ["Completed Items", `${completedRows.length} (${completedCredits} credits)`],
+        ["Needs to be done", `${pendingRows.length} (${pendingCredits} credits)`],
+        ["Faculty Verified", `${verifiedCount}/${trackerRows.length}`],
+      ],
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: [249, 115, 22] },
+      theme: "grid",
+    });
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      head: [["Initiative", "Category", "Course Code", "Credits", "Status", "Proof"]],
+      body: trackerRows.length
+        ? trackerRows.map((row) => [
+            row.initiativeTitle,
+            row.category,
+            row.courseCode,
+            String(row.initiativeCredits),
+            row.verified ? "Completed (Faculty Verified)" : "Submitted, pending faculty verification",
+            row.proof?.fileName || "Not uploaded",
+          ])
+        : [["No submitted initiatives yet", "-", "-", "-", "-", "-"]],
+      styles: { fontSize: 8.5, cellPadding: 2.2 },
+      headStyles: { fillColor: [59, 130, 246] },
+      theme: "grid",
+    });
+
+    doc.save(`progress-tracker-${selectedTerm}.pdf`);
+    toast.success("Progress tracker PDF downloaded");
+  };
 
   const handleDownloadPdf = () => {
     if (curriculumRows.length === 0) {
@@ -605,6 +1079,31 @@ const EduRevOverview = () => {
 
   return (
     <div className="py-8 max-w-6xl mx-auto animate-fade-in">
+      {/* Demo button to trigger disclaimer modal - replace with your actual trigger */}
+      <div className="mb-4">
+        <button
+          className="px-4 py-2 rounded bg-primary text-white"
+          onClick={() => setDisclaimerOpen(true)}
+        >
+          Open Disclaimer Modal
+        </button>
+      </div>
+
+      {/* Show correct disclaimer modal based on eligibility */}
+      {disclaimerOpen && (
+        isEligible ? (
+          <EduRevDisclaimerModalEligible
+            open={disclaimerOpen}
+            onConfirm={() => setDisclaimerOpen(false)}
+            onCancel={() => setDisclaimerOpen(false)}
+          />
+        ) : (
+          <EduRevDisclaimerModalNonEligible
+            open={disclaimerOpen}
+            onCancel={() => setDisclaimerOpen(false)}
+          />
+        )
+      )}
       <motion.div
         key="overview"
         initial={{ opacity: 0 }}
@@ -623,6 +1122,19 @@ const EduRevOverview = () => {
               <>Master Concepts Inside the Classroom</>
             )}
           </h1>
+
+          {hasJoinedEduRev && (
+            <div className="mb-4 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setProgressTrackerOpen(true)}
+                className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors"
+              >
+                <Target className="w-3.5 h-3.5" />
+                Progress Tracker
+              </button>
+            </div>
+          )}
 
           <div className="rounded-xl bg-secondary/40 border border-border p-1 mb-7 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((term) => {
@@ -728,6 +1240,11 @@ const EduRevOverview = () => {
                         <p className="text-xs font-semibold text-primary mt-2">
                           View details ({items.length})
                         </p>
+                        {!!outClassCategoryCourseSelection[category]?.length && (
+                          <p className="text-[11px] font-semibold text-foreground/80 mt-1">
+                            Selected course codes: {outClassCategoryCourseSelection[category].join(", ")}
+                          </p>
+                        )}
                       </button>
                     );
                   })}
@@ -745,6 +1262,157 @@ const EduRevOverview = () => {
                       <DialogTitle>{activeOutClassCategory} Initiatives</DialogTitle>
                     </DialogHeader>
 
+                    <div className="rounded-lg border border-border bg-secondary/20 p-3">
+                      <p className="text-xs font-semibold text-foreground mb-2">
+                        Select course codes for this category ({termYearLabel})
+                      </p>
+
+                      {activeOutClassCategory && activeTermSelectedCourses.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {activeTermSelectedCourses.map((course) => {
+                            const isSelected = (outClassCategoryCourseSelection[activeOutClassCategory] || []).includes(course.courseCode);
+                            return (
+                              <button
+                                key={course.id}
+                                type="button"
+                                onClick={() => previewOutClassCourseCode(course.courseCode)}
+                                className={`h-8 px-3 rounded-full text-xs font-semibold border transition-colors ${
+                                  activeOutClassCourseCode === course.courseCode
+                                    ? "border-primary bg-primary text-white"
+                                    : isSelected
+                                      ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border bg-card text-foreground hover:bg-secondary"
+                                }`}
+                                title={course.name}
+                              >
+                                {course.courseCode}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No selected course codes found for this term.</p>
+                      )}
+
+                      {activeOutClassCategory && activeOutClassCourseCode && (
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          <p className="text-[11px] text-muted-foreground">
+                            Clicked code is in preview mode. Use button to add/remove selection.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => toggleOutClassCourseSelection(activeOutClassCategory, activeOutClassCourseCode)}
+                            className={`h-8 px-3 rounded-md text-xs font-semibold border transition-colors ${
+                              (outClassCategoryCourseSelection[activeOutClassCategory] || []).includes(activeOutClassCourseCode)
+                                ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                : "border-primary bg-primary text-white hover:bg-primary/90"
+                            }`}
+                          >
+                            {(outClassCategoryCourseSelection[activeOutClassCategory] || []).includes(activeOutClassCourseCode)
+                              ? `Remove ${activeOutClassCourseCode}`
+                              : `Select ${activeOutClassCourseCode}`}
+                          </button>
+                        </div>
+                      )}
+
+                      {activeOutClassCategory && !!outClassCategoryCourseSelection[activeOutClassCategory]?.length && (
+                        <p className="text-[11px] text-muted-foreground mt-2">
+                          Selected: {outClassCategoryCourseSelection[activeOutClassCategory].join(", ")}
+                        </p>
+                      )}
+                    </div>
+
+                    {activeOutClassCategory && activeOutClassCourseCode && (
+                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                        <p className="text-xs font-semibold text-foreground">
+                          Faculty uploaded {activeOutClassCategory} for <span className="text-primary">{activeOutClassCourseCode}</span>
+                        </p>
+
+                        {activeFacultyInitiatives.length > 0 ? (
+                          <div className="mt-3 space-y-3">
+                            {activeFacultyInitiatives.map((initiative) => {
+                              const key = getCourseCategoryKey(activeOutClassCategory, activeOutClassCourseCode);
+                              const isPicked = (selectedInitiatives[key] || []).includes(initiative.id);
+                              const isSubmitted = (submittedInitiatives[key] || []).includes(initiative.id);
+                              const isDone = (facultyVerifiedInitiatives[key] || []).includes(initiative.id);
+
+                              return (
+                                <div key={initiative.id} className="rounded-lg border border-border bg-card p-3">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <p className="text-sm font-semibold text-foreground">{initiative.title}</p>
+                                      <p className="text-xs text-muted-foreground mt-1">{initiative.description}</p>
+                                      <p className="text-[11px] text-foreground/80 mt-2">
+                                        Expected Outcome: {initiative.expectedOutcome}
+                                      </p>
+                                      <p className="text-[11px] font-semibold text-primary mt-1">
+                                        Out-Class Credits: {getInitiativeCredits(initiative, activeFacultyCategory)}
+                                      </p>
+
+                                      {isDone ? (
+                                        <p className="text-[11px] font-semibold text-emerald-700 mt-2">
+                                          Status: Completed (Faculty Verified)
+                                        </p>
+                                      ) : isSubmitted ? (
+                                        <p className="text-[11px] font-semibold text-blue-700 mt-2">
+                                          Status: Submitted, awaiting faculty verification
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          toggleInitiativeSelection(activeOutClassCategory, activeOutClassCourseCode, initiative.id)
+                                        }
+                                        disabled={isSubmitted || isDone}
+                                        className={`h-8 px-3 rounded-md text-xs font-semibold border transition-colors ${
+                                          isDone
+                                            ? "border-emerald-600 bg-emerald-600 text-white cursor-not-allowed"
+                                            : isSubmitted
+                                              ? "border-blue-600 bg-blue-600 text-white cursor-not-allowed"
+                                            : isPicked
+                                            ? "border-primary bg-primary text-white"
+                                            : "border-border bg-card text-foreground hover:bg-secondary"
+                                        }`}
+                                      >
+                                        {isDone ? "Completed" : isSubmitted ? "Submitted" : isPicked ? "Selected" : "Select"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {(() => {
+                              const pickedCount = getSelectedInitiativeCountForCategory(activeOutClassCategory);
+                              return (
+                                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/20 p-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    {pickedCount > 0
+                                      ? `${pickedCount} initiative(s) ready to submit`
+                                      : "Select initiatives and submit for faculty verification"}
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => openSubmitDisclaimer(activeOutClassCategory)}
+                                    disabled={pickedCount === 0}
+                                    className="h-8 px-3 rounded-md text-xs font-semibold border border-primary bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Submit Selection
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            No faculty-uploaded {activeOutClassCategory.toLowerCase()} found for {activeOutClassCourseCode} yet.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
                       {activeOutClassItems.map((item, index) => (
                         <div key={`${item.title}-${index}`} className="rounded-lg border border-border bg-secondary/20 p-3">
@@ -752,6 +1420,215 @@ const EduRevOverview = () => {
                           <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                         </div>
                       ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog
+                  open={submitDisclaimerOpen}
+                  onOpenChange={(isOpen) => {
+                    setSubmitDisclaimerOpen(isOpen);
+                    if (!isOpen) setPendingSubmitContext(null);
+                  }}
+                >
+                  <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Submission Disclaimer</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                      <p className="text-sm font-semibold text-foreground">Please confirm before submission</p>
+                      <p className="text-xs text-muted-foreground">
+                        After submission, your selected initiatives will be sent to faculty for verification.
+                        Completion status will be updated only after faculty review and approval.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSubmitDisclaimerOpen(false);
+                          setPendingSubmitContext(null);
+                        }}
+                        className="h-9 px-3 rounded-md border border-border bg-card text-sm font-semibold text-foreground hover:bg-secondary/60 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={confirmSubmitWithDisclaimer}
+                        className="h-9 px-3 rounded-md border border-primary bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+                      >
+                        I Understand, Submit
+                      </button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={progressTrackerOpen} onOpenChange={setProgressTrackerOpen}>
+                  <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                      <div className="flex items-center justify-between gap-3">
+                        <DialogTitle>Semester Progress Tracker — {termYearLabel}</DialogTitle>
+                        <button
+                          type="button"
+                          onClick={handleDownloadProgressPdf}
+                          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border bg-card text-foreground text-xs font-semibold hover:bg-secondary/60 transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Download PDF
+                        </button>
+                      </div>
+                    </DialogHeader>
+
+                    <div className="rounded-lg border border-border bg-secondary/20 p-2">
+                      <p className="text-[11px] font-semibold text-muted-foreground px-2 py-1">Term-wise tracker view</p>
+                      <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((term) => {
+                          const hasContent = terms.includes(term);
+                          return (
+                            <button
+                              key={`tracker-term-${term}`}
+                              type="button"
+                              onClick={() => setSelectedTerm(term)}
+                              className={`h-8 rounded-md text-xs font-semibold transition-all ${
+                                selectedTerm === term
+                                  ? "bg-primary text-white"
+                                  : "bg-card text-foreground/80 hover:bg-secondary"
+                              } ${!hasContent ? "opacity-60" : ""}`}
+                            >
+                              Term {term}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-secondary/20 p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="rounded-lg border border-border bg-card p-3">
+                          <p className="text-xs text-muted-foreground">Total Credits (Term)</p>
+                          <p className="text-xl font-bold text-foreground">{termTotalCredits}</p>
+                        </div>
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                          <p className="text-xs text-emerald-700">Out-Class Committed Credits</p>
+                          <p className="text-xl font-bold text-emerald-700">{outClassCommittedCredits}</p>
+                        </div>
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                          <p className="text-xs text-blue-700">In-Class Required Credits</p>
+                          <p className="text-xl font-bold text-blue-700">{inClassRequiredCredits}</p>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground mt-3">
+                        Example logic: if total is 24 credits and out-class commitment is 14, in-class requirement becomes 10.
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-card p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold text-foreground">Submitted Initiatives</p>
+                        <p className="text-xs font-semibold text-primary">
+                          Faculty Verified: {verifiedCount}/{trackerRows.length}
+                        </p>
+                      </div>
+
+                      {trackerRows.length > 0 ? (
+                        <div className="max-h-[46vh] overflow-y-auto space-y-3 pr-1">
+                          {trackerRows.map((row) => (
+                            <div key={`${row.category}-${row.courseCode}-${row.initiativeId}`} className="rounded-lg border border-border bg-secondary/20 p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-foreground">{row.initiativeTitle}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {row.category} • {row.courseCode}
+                                  </p>
+                                  <p className="text-[11px] text-primary mt-1 font-semibold">
+                                    Credits: {row.initiativeCredits}
+                                  </p>
+                                  <p className={`text-[11px] font-semibold mt-2 ${row.verified ? "text-emerald-700" : "text-blue-700"}`}>
+                                    {row.verified
+                                      ? "Completed (Faculty Verified)"
+                                      : "Submitted, pending faculty verification"}
+                                  </p>
+                                  {row.proof && (
+                                    <p className="text-[11px] text-muted-foreground mt-1">
+                                      Proof: {row.proof.fileName} ({row.proof.uploadedAt})
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="shrink-0">
+                                  <label className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 cursor-pointer">
+                                    Upload Proof
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      onChange={(event) =>
+                                        handleProofUpload(
+                                          row.category,
+                                          row.courseCode,
+                                          row.initiativeId,
+                                          event.target.files?.[0] || null
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No submitted initiatives yet. Select and submit initiatives first.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <p className="text-sm font-semibold text-emerald-800">Completed</p>
+                          <p className="text-xs font-semibold text-emerald-700">
+                            {completedRows.length} items • {completedCredits} credits
+                          </p>
+                        </div>
+
+                        {completedRows.length > 0 ? (
+                          <ul className="space-y-1.5">
+                            {completedRows.map((row) => (
+                              <li key={`completed-${row.category}-${row.courseCode}-${row.initiativeId}`} className="text-xs text-emerald-800">
+                                • {row.initiativeTitle} ({row.courseCode})
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-emerald-700/80">No faculty-verified completed items yet.</p>
+                        )}
+                      </div>
+
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <p className="text-sm font-semibold text-amber-800">Needs to be done</p>
+                          <p className="text-xs font-semibold text-amber-700">
+                            {pendingRows.length} items • {pendingCredits} credits
+                          </p>
+                        </div>
+
+                        {pendingRows.length > 0 ? (
+                          <ul className="space-y-1.5">
+                            {pendingRows.map((row) => (
+                              <li key={`pending-${row.category}-${row.courseCode}-${row.initiativeId}`} className="text-xs text-amber-800">
+                                • {row.initiativeTitle} ({row.courseCode})
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-amber-700/80">All submitted initiatives are verified.</p>
+                        )}
+                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>

@@ -2,14 +2,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 
-interface EduRevDisclaimerModalProps {
+interface EduRevDisclaimerModalNonEligibleProps {
   open: boolean;
-  onConfirm: () => void;
   onCancel: () => void;
-  isHighPerformanceFlow?: boolean;
 }
 
-const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlow }: EduRevDisclaimerModalProps) => {
+const EduRevDisclaimerModalNonEligible = ({ open, onCancel }: EduRevDisclaimerModalNonEligibleProps) => {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl">
@@ -19,35 +17,28 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlo
               <AlertCircle className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-xl">Join EDU-Revolution</DialogTitle>
+              <DialogTitle className="text-xl">Not Eligible for EDU-Revolution</DialogTitle>
               <DialogDescription className="mt-2 text-base">
-                Are you sure you want to be part of the EDU-Revolution program?
+                You are currently not eligible to join the EDU-Revolution program.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4 w-full overflow-auto">
-          <p className="text-sm text-blue-900 leading-relaxed break-words">
-            By joining EDU-Revolution, you agree to select specific academic benefits for each of your courses. These benefits can include revenue generation, projects, certifications, internships, and more. You'll be able to track your progress and achievements throughout your academic journey.
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4 w-full overflow-auto">
+          <p className="text-sm text-red-900 leading-relaxed break-words">
+            To participate in EDU-Revolution, you must meet the minimum academic requirements. Please improve your CGPA or marks and try again. For more information, visit our website.
           </p>
         </div>
 
         <DialogFooter className="gap-3 flex flex-row justify-end">
           <Button
-            variant="outline"
             onClick={() => {
               window.location.replace("https://edurev.vercel.app/");
             }}
-            className="h-10 px-6"
+            className="h-10 px-6 bg-primary hover:bg-primary/90 text-white"
           >
-            No, continue through conventional method
-          </Button>
-          <Button
-            onClick={onConfirm}
-            className="h-10 px-6 bg-primary hover:bg-primary/90"
-          >
-            Yes, Let&apos;s Go
+            Yes, continue to conventional method
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -55,4 +46,4 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlo
   );
 };
 
-export default EduRevDisclaimerModal;
+export default EduRevDisclaimerModalNonEligible;
