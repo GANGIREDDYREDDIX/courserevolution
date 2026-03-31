@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import EduRevDisclaimerModal from "@/components/edurev/EduRevDisclaimerModal";
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, PencilLine } from "lucide-react";
 
 const FLOW_STORAGE_KEY = "course-navigator-flow-inputs";
 const PROFILE_STORAGE_KEY = "course-navigator-profile-inputs";
@@ -49,7 +49,7 @@ const isValidUrl = (value: string) => {
 
 const ReviewAll = () => {
   const navigate = useNavigate();
-  const { categories, selections, getCreditsUsed, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
+  const { student, categories, selections, getCreditsUsed, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [flowInputs, setFlowInputs] = useState(loadSavedFlowInputs);
@@ -62,6 +62,7 @@ const ReviewAll = () => {
   const hasValidCgpa = Number.isFinite(cgpa) && cgpa >= 0 && cgpa <= 10;
   const hasValidMarks = Number.isFinite(marks) && marks >= 0 && marks <= 100;
   const hasValidAcademicInputs = hasValidCgpa && hasValidMarks;
+  const isEligibleStudent = (student.cgpa >= CGPA_THRESHOLD) || (student.marks >= MARKS_THRESHOLD);
 
   const isHighPerformanceFlow = hasValidAcademicInputs && (cgpa >= CGPA_THRESHOLD || marks >= MARKS_THRESHOLD);
   const selectedFlowTitle = isHighPerformanceFlow ? "Advanced Growth Flow" : "Foundation Support Flow";
@@ -196,22 +197,34 @@ const ReviewAll = () => {
               </div>
 
               <div className="mt-3">
-                <button
-                  onClick={() => toggleExpanded(category.id)}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-semibold text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  {isExpanded ? (
-                    <>
-                      Hide Courses
-                      <ChevronUp className="w-3.5 h-3.5" />
-                    </>
-                  ) : (
-                    <>
-                      Check Courses
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleExpanded(category.id)}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs font-semibold text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    {isExpanded ? (
+                      <>
+                        Hide Review
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </>
+                    ) : (
+                      <>
+                        Review
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+
+                  {category.isElective && (
+                    <button
+                      onClick={() => navigate(`/category/${category.id}`)}
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary/30 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <PencilLine className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
                   )}
-                </button>
+                </div>
               </div>
 
               {isExpanded && (
@@ -242,11 +255,17 @@ const ReviewAll = () => {
         </button>
 
         <button
-          onClick={() => setShowDisclaimer(true)}
+          onClick={() => {
+            if (!isEligibleStudent) {
+              window.location.replace("https://edurev.vercel.app/");
+              return;
+            }
+            setShowDisclaimer(true);
+          }}
           disabled={!canProceed}
           className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isHighPerformanceFlow ? "Continue to Learning by Doing" : "Continue to Conventional Method"}
+          {isEligibleStudent ? "Select your Learning Preference" : "Continue to Conventional Method"}
         </button>
       </div>
 
@@ -379,14 +398,10 @@ const ReviewAll = () => {
 
       <EduRevDisclaimerModal
         open={showDisclaimer}
-        isHighPerformanceFlow={isHighPerformanceFlow}
+        isHighPerformanceFlow={isEligibleStudent}
         onConfirm={() => {
           setShowDisclaimer(false);
-          if (!isHighPerformanceFlow) {
-            window.location.replace("https://edurev.vercel.app/");
-          } else {
-            proceedByFlow();
-          }
+          proceedByFlow();
         }}
         onCancel={() => {
           setShowDisclaimer(false);

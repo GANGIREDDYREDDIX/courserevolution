@@ -1,30 +1,36 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import StudentHero from "@/components/layout/StudentHero";
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import { useStudent } from "@/context/StudentContext";
 import { getDemoStudentOptions } from "@/data/mockStudent";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UserRound } from "lucide-react";
 
 const Home = () => {
-  const { setDemoStudentProfile } = useStudent();
-  const [showLogin, setShowLogin] = useState(true);
+  const { setDemoStudentProfile, selectedDemoProfileId } = useStudent();
+  const [showLogin, setShowLogin] = useState(() => !selectedDemoProfileId);
   const demoOptions = getDemoStudentOptions();
-
-  useEffect(() => {
-    // Open demo user chooser every time the page is refreshed.
-    setShowLogin(true);
-  }, []);
+  const selectedOption = selectedDemoProfileId
+    ? demoOptions.find((option) => option.id === selectedDemoProfileId)
+    : null;
 
   return (
     <AppShell>
+      <div className="pt-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowLogin(true)}
+          className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary/40 transition-colors"
+        >
+          <UserRound className="w-4 h-4 text-primary" />
+          <span>{selectedOption ? selectedOption.title : "Select Demo User"}</span>
+        </button>
+      </div>
+
       <Dialog
         open={showLogin}
-        onOpenChange={(open) => {
-          // Keep dialog open until a demo user is selected.
-          if (!open) return;
-          setShowLogin(open);
-        }}
+        onOpenChange={setShowLogin}
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

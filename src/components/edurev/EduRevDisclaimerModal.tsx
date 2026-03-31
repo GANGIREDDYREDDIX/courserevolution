@@ -10,6 +10,8 @@ interface EduRevDisclaimerModalProps {
 }
 
 const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlow }: EduRevDisclaimerModalProps) => {
+  const isEligible = Boolean(isHighPerformanceFlow);
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl">
@@ -19,7 +21,9 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlo
               <AlertCircle className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-xl">Join EDU-Revolution</DialogTitle>
+              <DialogTitle className="text-xl">
+                {isEligible ? "Select your learning preference" : "Join EDU-Revolution"}
+              </DialogTitle>
               <DialogDescription className="mt-2 text-base">
                 Are you sure you want to be part of the EDU-Revolution program?
               </DialogDescription>
@@ -41,13 +45,13 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlo
             }}
             className="h-10 px-6"
           >
-            No, continue through conventional method
+            {isEligible ? "conventional method" : "No, continue through conventional method"}
           </Button>
           <Button
             onClick={onConfirm}
             className="h-10 px-6 bg-primary hover:bg-primary/90"
           >
-            Yes, Let&apos;s Go
+            {isEligible ? "Learning by doing" : "Yes, Let&apos;s Go"}
           </Button>
         </DialogFooter>
       </DialogContent>

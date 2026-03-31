@@ -18,7 +18,7 @@ const EduRevDisclaimerModalEligible = ({ open, onConfirm, onCancel }: EduRevDisc
               <AlertCircle className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-xl">Join EDU-Revolution</DialogTitle>
+              <DialogTitle className="text-xl">Select your learning preference</DialogTitle>
               <DialogDescription className="mt-2 text-base">
                 Are you sure you want to be part of the EDU-Revolution program?
               </DialogDescription>
@@ -40,13 +40,13 @@ const EduRevDisclaimerModalEligible = ({ open, onConfirm, onCancel }: EduRevDisc
             }}
             className="h-10 px-6"
           >
-            No, continue through conventional method
+            conventional method
           </Button>
           <Button
             onClick={onConfirm}
             className="h-10 px-6 bg-primary hover:bg-primary/90"
           >
-            Yes, Let&apos;s Go
+            Learning by doing
           </Button>
         </DialogFooter>
       </DialogContent>

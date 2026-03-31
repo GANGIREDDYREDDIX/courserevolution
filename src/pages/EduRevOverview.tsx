@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import EduRevDisclaimerModalEligible from "@/components/edurev/EduRevDisclaimerModalEligible";
-import EduRevDisclaimerModalNonEligible from "@/components/edurev/EduRevDisclaimerModalNonEligible";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { motion } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { buildOutClassBenefitRows } from "@/data/outClassBenefits";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -22,7 +21,8 @@ import {
   Globe,
   Laptop,
   Network,
-  Target
+  Target,
+  Eye
 } from "lucide-react";
 import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
 
@@ -306,6 +306,7 @@ const termDetails: Record<number, {
 };
 
 type OutClassCategoryType = "Projects" | "Certifications" | "Internship";
+
 type FacultyInitiative = {
   id: string;
   title: string;
@@ -489,11 +490,9 @@ const EduRevOverview = () => {
     student,
   } = useStudent();
 
-  // Modal state
-  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
-
   // Eligibility logic (adjust as needed)
   const isEligible = (student?.cgpa ?? 0) >= 8 || (student?.marks ?? 0) >= 75;
+  const showEduRevExperience = hasJoinedEduRev || isEligible;
   const [selectedTerm, setSelectedTerm] = useState<number>(1);
   const [activeOutClassCategory, setActiveOutClassCategory] = useState<string | null>(null);
   const [outClassCategoryCourseSelection, setOutClassCategoryCourseSelection] = useState<Record<string, string[]>>({});
@@ -504,6 +503,7 @@ const EduRevOverview = () => {
   const [proofUploads, setProofUploads] = useState<Record<string, { fileName: string; uploadedAt: string }>>({});
   const [submitDisclaimerOpen, setSubmitDisclaimerOpen] = useState(false);
   const [pendingSubmitContext, setPendingSubmitContext] = useState<{ category: string } | null>(null);
+  const [benefitsTableOpen, setBenefitsTableOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -689,6 +689,7 @@ const EduRevOverview = () => {
     return acc;
   }, {} as Record<string, string>);
   const termYearLabel = `Year ${Math.ceil(selectedTerm / 2)} Sem ${selectedTerm % 2 === 1 ? 1 : 2}`;
+  const activeTermBenefitsRows = buildOutClassBenefitRows(activeTermSelectedCourses);
 
   useEffect(() => {
     if (!activeOutClassCategory) {
@@ -1079,31 +1080,6 @@ const EduRevOverview = () => {
 
   return (
     <div className="py-8 max-w-6xl mx-auto animate-fade-in">
-      {/* Demo button to trigger disclaimer modal - replace with your actual trigger */}
-      <div className="mb-4">
-        <button
-          className="px-4 py-2 rounded bg-primary text-white"
-          onClick={() => setDisclaimerOpen(true)}
-        >
-          Open Disclaimer Modal
-        </button>
-      </div>
-
-      {/* Show correct disclaimer modal based on eligibility */}
-      {disclaimerOpen && (
-        isEligible ? (
-          <EduRevDisclaimerModalEligible
-            open={disclaimerOpen}
-            onConfirm={() => setDisclaimerOpen(false)}
-            onCancel={() => setDisclaimerOpen(false)}
-          />
-        ) : (
-          <EduRevDisclaimerModalNonEligible
-            open={disclaimerOpen}
-            onCancel={() => setDisclaimerOpen(false)}
-          />
-        )
-      )}
       <motion.div
         key="overview"
         initial={{ opacity: 0 }}
@@ -1112,7 +1088,7 @@ const EduRevOverview = () => {
         <div className="mb-8 rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
           <p className="text-[11px] uppercase tracking-[0.18em] text-primary/80 mb-3">Course Overview</p>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-6">
-            {hasJoinedEduRev ? (
+            {showEduRevExperience ? (
               <>
                 Master Concepts Inside
                 <br />
@@ -1123,7 +1099,7 @@ const EduRevOverview = () => {
             )}
           </h1>
 
-          {hasJoinedEduRev && (
+          {showEduRevExperience && (
             <div className="mb-4 flex items-center justify-end">
               <button
                 type="button"
@@ -1155,8 +1131,8 @@ const EduRevOverview = () => {
             })}
           </div>
 
-          <div className={`grid grid-cols-1 ${hasJoinedEduRev ? "lg:grid-cols-2" : ""} gap-6`}>
-            <div className={`rounded-2xl border border-blue-200 bg-blue-50/40 p-5 ${hasJoinedEduRev ? "" : "max-w-3xl"}`}>
+          <div className={`grid grid-cols-1 ${showEduRevExperience ? "lg:grid-cols-2" : ""} gap-6`}>
+            <div className={`rounded-2xl border border-blue-200 bg-blue-50/40 p-5 ${showEduRevExperience ? "" : "max-w-3xl"}`}>
               <div className="flex items-center gap-3 mb-3">
                 <span className="w-12 h-12 rounded-xl bg-blue-500 text-white inline-flex items-center justify-center shadow-sm">
                   <BookOpen className="w-6 h-6" />
@@ -1190,7 +1166,7 @@ const EduRevOverview = () => {
               )}
             </div>
 
-            {hasJoinedEduRev && (
+            {showEduRevExperience && (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="w-12 h-12 rounded-xl bg-emerald-500 text-white inline-flex items-center justify-center shadow-sm">
@@ -1213,6 +1189,17 @@ const EduRevOverview = () => {
                     )}
                   </div>
                 )}
+
+                <div className="mb-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setBenefitsTableOpen(true)}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    View Benefits Table
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {groupedOutClassEntries.map(([category, items]) => {
@@ -1256,7 +1243,14 @@ const EduRevOverview = () => {
                   )}
                 </div>
 
-                <Dialog open={!!activeOutClassCategory} onOpenChange={(isOpen) => !isOpen && setActiveOutClassCategory(null)}>
+                <Dialog
+                  open={!!activeOutClassCategory}
+                  onOpenChange={(isOpen) => {
+                    if (!isOpen) {
+                      setActiveOutClassCategory(null);
+                    }
+                  }}
+                >
                   <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>{activeOutClassCategory} Initiatives</DialogTitle>
@@ -1421,6 +1415,52 @@ const EduRevOverview = () => {
                         </div>
                       ))}
                     </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={benefitsTableOpen} onOpenChange={setBenefitsTableOpen}>
+                  <DialogContent className="sm:max-w-6xl">
+                    <DialogHeader>
+                      <DialogTitle>Out Class Benefits by Course Code ({termYearLabel})</DialogTitle>
+                    </DialogHeader>
+
+                    {activeTermBenefitsRows.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-[980px] w-full border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-emerald-100/70 text-foreground">
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Course</th>
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Project Title</th>
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Certification</th>
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Technical Competition / Hackathon</th>
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Internship (Stipend)</th>
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Revenue Opportunity</th>
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Academic Equivalence</th>
+                              <th className="border border-emerald-200 px-2 py-1.5 text-left">Portfolio</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {activeTermBenefitsRows.map((row) => (
+                              <tr key={`benefits-dialog-${row.courseCode}`} className="odd:bg-card even:bg-secondary/20 align-top">
+                                <td className="border border-emerald-100 px-2 py-1.5">
+                                  <p className="font-semibold text-foreground">{row.courseCode}</p>
+                                  <p className="text-[11px] text-muted-foreground">{row.courseName}</p>
+                                </td>
+                                <td className="border border-emerald-100 px-2 py-1.5">{row.projectTitle}</td>
+                                <td className="border border-emerald-100 px-2 py-1.5">{row.certification}</td>
+                                <td className="border border-emerald-100 px-2 py-1.5">{row.technicalCompetition}</td>
+                                <td className="border border-emerald-100 px-2 py-1.5">{row.internship}</td>
+                                <td className="border border-emerald-100 px-2 py-1.5">{row.revenueOpportunity}</td>
+                                <td className="border border-emerald-100 px-2 py-1.5">{row.academicEquivalence}</td>
+                                <td className="border border-emerald-100 px-2 py-1.5">{row.portfolio}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No selected course codes found for this term.</p>
+                    )}
                   </DialogContent>
                 </Dialog>
 

@@ -174,8 +174,17 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const setDemoStudentProfile = (profileId: DemoStudentProfileId) => {
     const nextStudent = getDemoStudentByProfile(profileId);
+    const isSwitchingProfile = selectedDemoProfileId !== profileId;
     setSelectedDemoProfileId(profileId);
     setStudent(nextStudent);
+    if (isSwitchingProfile) {
+      // Start a fresh flow only when switching to a different demo profile.
+      setSelections(normalizeSelections({}));
+      setEduRevSelections({});
+      setHasJoinedEduRev(false);
+      setSelectedEduRevPathway(null);
+      setSelectedEduRevTier(null);
+    }
     localStorage.setItem(DEMO_PROFILE_STORAGE_KEY, profileId);
     localStorage.setItem(
       FLOW_INPUTS_STORAGE_KEY,
