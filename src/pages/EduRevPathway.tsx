@@ -52,29 +52,29 @@ const defaultMinorLabelMap: Record<string, string> = {
 };
 
 type TierPlan = {
-  salary: "₹50 LPA Track" | "₹30 LPA Track" | "₹20 LPA Track";
+  salary: "Above ₹25 LPA Track" | "₹10-25 LPA Track" | "Up to ₹10 LPA Track";
   role: string;
   dataFocus: string;
   certifications: string[];
 };
 
 const salaryToTierId: Record<TierPlan["salary"], EduRevTierId> = {
-  "₹50 LPA Track": "tier_50",
-  "₹30 LPA Track": "tier_30",
-  "₹20 LPA Track": "tier_20",
+  "Above ₹25 LPA Track": "tier_50",
+  "₹10-25 LPA Track": "tier_30",
+  "Up to ₹10 LPA Track": "tier_20",
 };
 
 const TIER_RULES: Record<EduRevTierId, { label: string; check: (cgpa: number, marks: number) => boolean }> = {
   tier_50: {
-    label: "CGPA ≥ 9.0 or Marks ≥ 90%",
+    label: "Level 3 → High proficiency + strong problem-solving + advanced certifications",
     check: (cgpa, marks) => cgpa >= 9 || marks >= 90,
   },
   tier_30: {
-    label: "CGPA ≥ 8.0 or Marks ≥ 75%",
+    label: "Level 2 → Moderate + certifications required",
     check: (cgpa, marks) => cgpa >= 8 || marks >= 75,
   },
   tier_20: {
-    label: "CGPA ≥ 7.0 or Marks ≥ 65%",
+    label: "Level 1 → Basic eligibility",
     check: (cgpa, marks) => cgpa >= 7 || marks >= 65,
   },
 };
@@ -89,19 +89,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
   cloud: {
     placements: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Senior Cloud Platform Engineer",
         dataFocus: "Distributed systems design, multi-cloud architecture, Kubernetes platform engineering",
         certifications: ["AWS Solutions Architect Professional", "CKA", "Google Professional Cloud Architect"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Cloud DevOps Engineer",
         dataFocus: "CI/CD optimization, observability pipelines, IaC with Terraform",
         certifications: ["AWS DevOps Engineer Professional", "Terraform Associate", "CKAD"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Cloud Support / SRE Associate",
         dataFocus: "Monitoring dashboards, incident response metrics, Linux + networking operations",
         certifications: ["AWS Solutions Architect Associate", "Azure Administrator", "Docker Certified Associate"],
@@ -109,19 +109,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     entrepreneurship: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "B2B Cloud SaaS Founder",
         dataFocus: "Usage analytics, infra cost forecasting, enterprise onboarding data",
         certifications: ["FinOps Certified Practitioner", "AWS SaaS Factory Foundation", "CKA"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Cloud Automation Product Builder",
         dataFocus: "Developer productivity metrics, API telemetry, release quality data",
         certifications: ["AWS Developer Associate", "Azure Developer Associate", "Terraform Associate"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Freelance Cloud Consultant",
         dataFocus: "Migration reports, backup/security audit data, client infrastructure baselines",
         certifications: ["AWS Cloud Practitioner", "Microsoft Azure Fundamentals", "Google Associate Cloud Engineer"],
@@ -129,19 +129,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     revenue_generation: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Premium Cloud Architect Consultant",
         dataFocus: "Enterprise modernization datasets, scalability benchmarks, cost-to-performance analytics",
         certifications: ["AWS SAP", "Google PCA", "CKS"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Cloud Freelance DevOps Specialist",
         dataFocus: "Pipeline metrics, deployment throughput, reliability data trends",
         certifications: ["AWS DevOps Pro", "CKAD", "HashiCorp Terraform Associate"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Cloud Operations Freelancer",
         dataFocus: "System uptime data, ticket resolution dashboards, security compliance checks",
         certifications: ["AWS SAA", "Azure Admin", "CompTIA Cloud+"],
@@ -149,19 +149,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     higher_studies: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "MS/Research in Cloud & Distributed Systems",
         dataFocus: "Research datasets on scheduling, cloud security, autoscaling optimization",
         certifications: ["AWS SAP", "Google PCA", "TOGAF Foundation"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Applied Cloud Systems Graduate",
         dataFocus: "Workload profiling data, architecture comparison studies",
         certifications: ["AWS SAA", "CKA", "Azure Solutions Architect Expert"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "PG Diploma + Cloud Engineer",
         dataFocus: "Case-study datasets, cloud migration reports and operations data",
         certifications: ["AWS CCP", "Azure Fundamentals", "Linux Foundation KCNA"],
@@ -169,19 +169,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     govt_exams: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Technical Specialist (PSU/High-end public tech roles)",
         dataFocus: "Secure cloud infra for e-governance, scale planning, compliance data",
         certifications: ["NIELIT Cloud Computing", "AWS Security Specialty", "ISO 27001 Lead Implementer"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "System/Network Officer",
         dataFocus: "Public service workload metrics, backup and disaster recovery datasets",
         certifications: ["RHCSA", "Azure Admin", "CompTIA Security+"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "IT Officer / Junior Technical Executive",
         dataFocus: "Ticketing data, infra health logs, department resource reports",
         certifications: ["CCNA", "AWS CCP", "NPTEL Cloud Computing"],
@@ -191,19 +191,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
   cyber: {
     placements: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Senior Security Engineer / SOC Lead",
         dataFocus: "Threat intelligence feeds, SIEM correlation, zero-trust telemetry",
         certifications: ["CISSP", "OSCP", "GIAC GSEC"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Security Analyst / Pentester",
         dataFocus: "Vulnerability scan data, penetration testing reports, incident response metrics",
         certifications: ["CEH", "CompTIA Security+", "eJPT"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "SOC Analyst / Security Associate",
         dataFocus: "Log analysis dashboards, phishing detection patterns, endpoint alerts",
         certifications: ["Google Cybersecurity Certificate", "CompTIA CySA+", "CC (ISC2)"],
@@ -211,19 +211,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     entrepreneurship: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Cybersecurity Product Founder",
         dataFocus: "Threat detection models, customer risk score datasets, compliance evidence automation",
         certifications: ["CISSP", "ISO 27001 LA", "CCSP"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Security Consulting Startup",
         dataFocus: "Audit findings data, risk heat maps, client maturity benchmarks",
         certifications: ["CEH", "CISA", "CompTIA PenTest+"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Freelance Security Auditor",
         dataFocus: "Web/mobile security reports, bug bounty submissions, remediation datasets",
         certifications: ["eJPT", "Security+", "NPTEL Ethical Hacking"],
@@ -231,19 +231,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     revenue_generation: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Premium VAPT Specialist",
         dataFocus: "Enterprise pentest evidence sets, cloud security baselines, exploit simulation outputs",
         certifications: ["OSCP", "CISSP", "CRTP"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Security Freelance Consultant",
         dataFocus: "OWASP risk scoring data, API security reports, SOC KPI analytics",
         certifications: ["CEH", "CompTIA PenTest+", "eCPPT"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Junior Cyber Freelancer",
         dataFocus: "Small-business risk assessments, endpoint hardening data, patch compliance stats",
         certifications: ["Security+", "CC (ISC2)", "Google Cybersecurity"],
@@ -251,19 +251,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     higher_studies: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "MS in Cybersecurity / Digital Forensics",
         dataFocus: "Malware datasets, anomaly detection research, cryptography implementation studies",
         certifications: ["CISSP", "CCSP", "GIAC GCIH"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Applied Security Research Track",
         dataFocus: "Network intrusion datasets, endpoint behavior analytics",
         certifications: ["CEH", "CySA+", "OSDA"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "PG Program + Security Engineer",
         dataFocus: "Security operations datasets, forensic evidence lifecycle data",
         certifications: ["CC", "Security+", "NPTEL Cyber Security"],
@@ -271,19 +271,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     govt_exams: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Cyber Cell / National Security Technical Roles",
         dataFocus: "Digital forensics datasets, threat intelligence for critical infra",
         certifications: ["CHFI", "CISSP", "ISO 27001 LA"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Cyber Security Officer (Govt/PSU)",
         dataFocus: "Incident response reports, compliance metrics, vulnerability trends",
         certifications: ["CEH", "Security+", "CISA"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "IT Security Executive",
         dataFocus: "SOC ticket analytics, audit observations, endpoint health data",
         certifications: ["CC", "CySA+", "NPTEL Information Security"],
@@ -293,19 +293,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
   generic: {
     placements: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Top Product/Platform Role",
         dataFocus: "Advanced DSA + system design interview data, domain project metrics",
         certifications: ["AWS/Azure Architect (domain specific)", "Advanced domain certification", "LeetCode top-percentile profile"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Core Engineer Role",
         dataFocus: "Hands-on project data, performance benchmarking, coding assessment progress",
         certifications: ["Associate-level cloud/security/domain certification", "NPTEL Elite certificate"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Entry Engineer Role",
         dataFocus: "Portfolio outcomes, internship data, coding/problem-solving consistency",
         certifications: ["Foundation certification", "NPTEL/MOOC completion certificates"],
@@ -313,19 +313,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     entrepreneurship: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Scalable Startup Builder",
         dataFocus: "Unit economics, growth analytics, retention dashboards",
         certifications: ["Startup India learning tracks", "Product management certification", "Cloud architecture certification"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Niche Product Founder",
         dataFocus: "Problem-validation datasets, acquisition funnel analytics",
         certifications: ["Digital marketing analytics", "Agile/Scrum certification"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Freelance-to-Startup Path",
         dataFocus: "Client success data, proposal conversion metrics, project profitability",
         certifications: ["Freelancing and business basics", "Domain foundation courses"],
@@ -333,19 +333,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     revenue_generation: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "High-ticket Consultant",
         dataFocus: "Outcome-driven case studies, ROI analytics, enterprise delivery metrics",
         certifications: ["Advanced domain certificate", "Consulting frameworks certification"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Professional Freelancer",
         dataFocus: "Project throughput, quality scores, client retention stats",
         certifications: ["Intermediate domain certification", "Client communication certification"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Entry Freelance Contributor",
         dataFocus: "Portfolio consistency, delivery timelines, project quality checklists",
         certifications: ["Foundation domain certification", "NPTEL/MOOC certificates"],
@@ -353,19 +353,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     higher_studies: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Top University MS/Research Route",
         dataFocus: "Research papers, publication datasets, GRE/IELTS score trend data",
         certifications: ["Advanced research methods", "Domain-specialized certificates"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Applied Masters Route",
         dataFocus: "Capstone project outcomes, applied research data",
         certifications: ["Domain intermediate certificates", "Academic writing certification"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "PG Diploma + Industry Role",
         dataFocus: "Practical project evidence, internship and upskilling datasets",
         certifications: ["Foundation certificates", "MOOC/NPTEL stack"],
@@ -373,19 +373,19 @@ const PLANS: Record<MinorKey, Record<PathwayId, TierPlan[]>> = {
     ],
     govt_exams: [
       {
-        salary: "₹50 LPA Track",
+        salary: "Above ₹25 LPA Track",
         role: "Senior Technical Public Sector Roles",
         dataFocus: "Exam score analytics, domain exam prep datasets, mock test benchmarks",
         certifications: ["Relevant PSU/technical exam prep credentials", "Advanced domain cert"],
       },
       {
-        salary: "₹30 LPA Track",
+        salary: "₹10-25 LPA Track",
         role: "Officer Level Technical Roles",
         dataFocus: "Topic mastery tracking, revision analytics, interview readiness metrics",
         certifications: ["Domain intermediate certification", "Aptitude and reasoning certifications"],
       },
       {
-        salary: "₹20 LPA Track",
+        salary: "Up to ₹10 LPA Track",
         role: "Junior Technical Govt Roles",
         dataFocus: "Subject-wise mock trends, consistency and completion stats",
         certifications: ["Foundation domain cert", "NIELIT/NPTEL equivalent certifications"],
@@ -513,6 +513,9 @@ const EduRevPathway = () => {
   }, [location.state]);
   const [selectedPathway, setSelectedPathway] = useState<PathwayId | null>(initialPathway);
   const [selectedTier, setSelectedTier] = useState<EduRevTierId | null>(initialTier);
+  const [hasAgreed, setHasAgreed] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [pendingPathway, setPendingPathway] = useState<PathwayId | null>(null);
 
 
 
@@ -591,6 +594,27 @@ const EduRevPathway = () => {
   return (
     <>
       <div className="py-8 max-w-5xl mx-auto animate-fade-in">
+        <EduRevDisclaimerModal
+          open={showDisclaimer}
+          isHighPerformanceFlow={true}
+          onConfirm={() => {
+            setHasAgreed(true);
+            setShowDisclaimer(false);
+            if (pendingPathway) {
+              if (selectedPathway !== pendingPathway) {
+                setSelectedTier(null);
+                setSelectedEduRevTier(null);
+              }
+              setSelectedPathway(pendingPathway);
+              setSelectedEduRevPathway(pendingPathway);
+              setPendingPathway(null);
+            }
+          }}
+          onCancel={() => {
+            setShowDisclaimer(false);
+            setPendingPathway(null);
+          }}
+        />
       <div className="mb-8">
         <button
           onClick={() => navigate(-1)}
@@ -607,7 +631,58 @@ const EduRevPathway = () => {
           Select the pathway that best aligns with your career goals and aspirations.
         </p>
 
-        <div className="mt-5 rounded-2xl border border-border bg-card shadow-sm p-4 md:p-5">
+              </div>
+
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">Choose Pathway</h2>
+        <p className="text-xs text-muted-foreground">Step 1 of 2</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+        {pathways.map((pathway) => (
+          <motion.button
+            key={pathway.id}
+            onClick={() => {
+              if (!hasAgreed) {
+                setPendingPathway(pathway.id);
+                setShowDisclaimer(true);
+              } else {
+                if (selectedPathway !== pathway.id) {
+                  setSelectedTier(null);
+                  setSelectedEduRevTier(null);
+                }
+                setSelectedPathway(pathway.id);
+                setSelectedEduRevPathway(pathway.id);
+              }
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`group text-left rounded-2xl border p-5 transition-all ${
+              selectedPathway === pathway.id
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border bg-card hover:border-primary/40 hover:shadow-sm"
+            }`}
+          >
+            <div className="flex items-start gap-4">
+              <span className="grid place-items-center w-12 h-12 rounded-lg bg-secondary border border-border text-2xl transition-transform group-hover:scale-105">
+                {pathway.icon}
+              </span>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl font-bold text-foreground">{pathway.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1.5">{pathway.description}</p>
+              </div>
+              {selectedPathway === pathway.id && (
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1">
+                  <span className="text-white text-sm">✓</span>
+                </div>
+              )}
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+{hasAgreed && (
+        <div className="mb-6 rounded-2xl border border-border bg-card shadow-sm p-4 md:p-5">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-primary">Student Eligibility Snapshot</p>
@@ -663,7 +738,7 @@ const EduRevPathway = () => {
                   className={`rounded-lg border-l-4 border px-3 py-2 ${isEligible ? "border-l-emerald-500 border-emerald-200 bg-emerald-50" : "border-l-amber-500 border-amber-200 bg-amber-50"}`}
                 >
                   <p className="text-xs font-bold text-foreground">
-                    {tierId === "tier_50" ? "₹50 LPA" : tierId === "tier_30" ? "₹30 LPA" : "₹20 LPA"}
+                    {tierId === "tier_50" ? "Above ₹25 LPA" : tierId === "tier_30" ? "₹10-25 LPA" : "Up to ₹10 LPA"}
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{TIER_RULES[tierId].label}</p>
                   <p className={`mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${isEligible ? "text-emerald-700" : "text-amber-700"}`}>
@@ -679,50 +754,7 @@ const EduRevPathway = () => {
             Eligibility logic: You can choose only tracks where at least one criterion is satisfied.
           </p>
         </div>
-      </div>
-
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">Choose Pathway</h2>
-        <p className="text-xs text-muted-foreground">Step 1 of 2</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-        {pathways.map((pathway) => (
-          <motion.button
-            key={pathway.id}
-            onClick={() => {
-              if (selectedPathway !== pathway.id) {
-                setSelectedTier(null);
-                setSelectedEduRevTier(null);
-              }
-              setSelectedPathway(pathway.id);
-              setSelectedEduRevPathway(pathway.id);
-            }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className={`group text-left rounded-2xl border p-5 transition-all ${
-              selectedPathway === pathway.id
-                ? "border-primary bg-primary/5 shadow-md"
-                : "border-border bg-card hover:border-primary/40 hover:shadow-sm"
-            }`}
-          >
-            <div className="flex items-start gap-4">
-              <span className="grid place-items-center w-12 h-12 rounded-lg bg-secondary border border-border text-2xl transition-transform group-hover:scale-105">
-                {pathway.icon}
-              </span>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-foreground">{pathway.title}</h2>
-                <p className="text-sm text-muted-foreground mt-1.5">{pathway.description}</p>
-              </div>
-              {selectedPathway === pathway.id && (
-                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1">
-                  <span className="text-white text-sm">✓</span>
-                </div>
-              )}
-            </div>
-          </motion.button>
-        ))}
-      </div>
+        )}
 
       {selectedPathwayMeta && (
           <div className="mb-8 rounded-2xl border border-border bg-card p-5 md:p-6 shadow-sm">

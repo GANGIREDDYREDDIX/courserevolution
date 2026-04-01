@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PieChart as RechartsPieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
 import { motion } from "framer-motion";
@@ -23,15 +24,45 @@ import {
   Network,
   Target,
   Eye,
+  ChevronDown,
+  ChevronUp,
   Terminal,
   Cpu,
   TestTube,
   Calculator,
   Database,
   Zap,
-  Shield
+  Shield,
+  BarChart2,
+  PieChart as PieChartIcon
 } from "lucide-react";
 import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
+
+const PROFILE_STORAGE_KEY = "course-navigator-profile-inputs";
+
+const loadSavedProfileInputs = () => {
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) return { github: "", portfolio: "", cvFileName: "" };
+    const parsed = JSON.parse(raw) as { github?: string; portfolio?: string; cvFileName?: string };
+    return {
+      github: typeof parsed.github === "string" ? parsed.github : "",
+      portfolio: typeof parsed.portfolio === "string" ? parsed.portfolio : "",
+      cvFileName: typeof parsed.cvFileName === "string" ? parsed.cvFileName : "",
+    };
+  } catch {
+    return { github: "", portfolio: "", cvFileName: "" };
+  }
+};
+
+const isValidUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 const getCourseTheme = (courseCode: string) => {
   const code = courseCode.toUpperCase();
@@ -572,11 +603,31 @@ const EduRevOverview = () => {
   const [activeOutClassCourseCode, setActiveOutClassCourseCode] = useState<string | null>(null);
   const [selectedInitiatives, setSelectedInitiatives] = useState<Record<string, string[]>>({});
   const [submittedInitiatives, setSubmittedInitiatives] = useState<Record<string, string[]>>({});
+  const [showInClassSection, setShowInClassSection] = useState(false);
+  const [showOutClassSection, setShowOutClassSection] = useState(false);
   const [progressTrackerOpen, setProgressTrackerOpen] = useState(false);
   const [proofUploads, setProofUploads] = useState<Record<string, { fileName: string; uploadedAt: string }>>({});
   const [submitDisclaimerOpen, setSubmitDisclaimerOpen] = useState(false);
   const [pendingSubmitContext, setPendingSubmitContext] = useState<{ category: string } | null>(null);
   const [benefitsTableOpen, setBenefitsTableOpen] = useState(false);
+  const [profileInputs, setProfileInputs] = useState(loadSavedProfileInputs);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [showPieChart, setShowPieChart] = useState(false);
+
+  const updateProfileInput = (key: "github" | "portfolio" | "cvFileName", value: string) => {
+    const next = { ...profileInputs, [key]: value };
+    setProfileInputs(next);
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+  };
+
+  const githubTrimmed = profileInputs.github.trim();
+  const portfolioTrimmed = profileInputs.portfolio.trim();
+  const hasCvFile = profileInputs.cvFileName.trim().length > 0;
+  const hasGithub = githubTrimmed.length > 0;
+  const hasPortfolio = portfolioTrimmed.length > 0;
+  const githubValid = !hasGithub || isValidUrl(githubTrimmed);
+  const portfolioValid = !hasPortfolio || isValidUrl(portfolioTrimmed);
+  const hasAtLeastOneProfileInput = hasCvFile || hasGithub || hasPortfolio;
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -659,9 +710,9 @@ const EduRevOverview = () => {
   };
 
   const tierLabelMap: Record<EduRevTierId, string> = {
-    tier_50: "₹50 LPA Track",
-    tier_30: "₹30 LPA Track",
-    tier_20: "₹20 LPA Track",
+    tier_50: "Above ₹25 LPA Track",
+    tier_30: "₹10-25 LPA Track",
+    tier_20: "Up to ₹10 LPA Track",
   };
 
   const tierFocusMap: Record<EduRevTierId, string> = {
@@ -1167,13 +1218,15 @@ const EduRevOverview = () => {
               <button
                 type="button"
                 onClick={() => setProgressTrackerOpen(true)}
-                className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors"
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-primary/30 bg-primary/10 text-primary text-sm font-bold hover:bg-primary/15 transition-colors"
               >
-                <Target className="w-3.5 h-3.5" />
+                <Target className="w-5 h-5 stroke-[2.5]" />
                 Target vs Achievement
               </button>
             </div>
           )}
+
+
 
           <div className="rounded-xl bg-secondary/40 border border-border p-1 mb-7 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((term) => {
@@ -1196,125 +1249,155 @@ const EduRevOverview = () => {
 
           <div className={`grid grid-cols-1 ${showEduRevExperience ? "lg:grid-cols-2" : ""} gap-6`}>
             <div className={`rounded-2xl border border-blue-200 bg-blue-50/40 p-5 ${showEduRevExperience ? "" : "max-w-3xl"}`}>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="w-12 h-12 rounded-xl bg-blue-500 text-white inline-flex items-center justify-center shadow-sm">
-                  <BookOpen className="w-6 h-6" />
-                </span>
-                <h2 className="text-4xl font-bold text-foreground leading-none">In Class</h2>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Structured curriculum with comprehensive coverage of core concepts and technologies.
-              </p>
+              <button 
+                type="button" 
+                onClick={() => setShowInClassSection(!showInClassSection)}
+                className="w-full flex items-start justify-between text-left group"
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="w-12 h-12 rounded-xl bg-blue-500 text-white inline-flex items-center justify-center shadow-sm">
+                      <BookOpen className="w-6 h-6" />
+                    </span>
+                    <h2 className="text-4xl font-bold text-foreground leading-none">In Class</h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Structured curriculum with comprehensive coverage of core concepts and technologies.
+                  </p>
+                </div>
+                <div className="mt-2 shrink-0 w-8 h-8 rounded-full bg-blue-100/50 flex items-center justify-center text-blue-700 transition-colors group-hover:bg-blue-200">
+                  {showInClassSection ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </div>
+              </button>
 
-              <div className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-100/30 px-3 py-2 text-sm">
-                <span className="font-semibold text-blue-700">In-Class Credits Requirement:</span>
-                <span className="inline-flex h-6 items-center justify-center rounded-md bg-blue-100 px-2 font-bold text-blue-800">
-                  {inClassRequiredCredits} / {termTotalCredits} Total
-                </span>
-              </div>
+              {showInClassSection && (
+                <div className="mt-5 animate-fade-in">
+                  <div className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-100/30 px-3 py-2 text-sm">
+                    <span className="font-semibold text-blue-700">In-Class Credits Requirement:</span>
+                    <span className="inline-flex h-6 items-center justify-center rounded-md bg-blue-100 px-2 font-bold text-blue-800">
+                      {inClassRequiredCredits} / {termTotalCredits} Total
+                    </span>
+                  </div>
 
-              <div className="space-y-3">
-                {selectedTermDetails.inClass.slice(0, 3).map((course) => (
-                  <div key={course.code} className="rounded-xl border border-blue-100 bg-card p-4">
-                    <p className="text-base font-bold text-foreground">{course.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1 font-mono">
-                      {course.code} • {termYearLabel} • {course.credits} Credits
+                  <div className="space-y-3">
+                    {selectedTermDetails.inClass.slice(0, 3).map((course) => (
+                      <div key={course.code} className="rounded-xl border border-blue-100 bg-card p-4">
+                        <p className="text-base font-bold text-foreground">{course.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1 font-mono">
+                          {course.code} • {termYearLabel} • {course.credits} Credits
+                        </p>
+                      </div>
+                    ))}
+                    {selectedTermDetails.inClass.length === 0 && (
+                      <div className="rounded-xl border border-dashed border-blue-200 bg-card/70 p-4 text-sm text-muted-foreground">
+                        No selected in-class courses yet.
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedTermDetails.inClass.length > 3 && (
+                    <p className="text-sm font-semibold text-muted-foreground text-center mt-4">
+                      +{selectedTermDetails.inClass.length - 3} more courses
                     </p>
-                  </div>
-                ))}
-                {selectedTermDetails.inClass.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-blue-200 bg-card/70 p-4 text-sm text-muted-foreground">
-                    No selected in-class courses yet.
-                  </div>
-                )}
-              </div>
-
-              {selectedTermDetails.inClass.length > 3 && (
-                <p className="text-sm font-semibold text-muted-foreground text-center mt-4">
-                  +{selectedTermDetails.inClass.length - 3} more courses
-                </p>
+                  )}
+                </div>
               )}
             </div>
 
             {showEduRevExperience && (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="w-12 h-12 rounded-xl bg-emerald-500 text-white inline-flex items-center justify-center shadow-sm">
-                    <Lightbulb className="w-6 h-6" />
-                  </span>
-                  <h2 className="text-4xl font-bold text-foreground leading-none">Outside Class</h2>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Experiential learning through real-world projects, certifications, and professional opportunities.
-                </p>
-
-                <div className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100/30 px-3 py-2 text-sm">
-                  <span className="font-semibold text-emerald-700">Out-Class Credits Committed:</span>
-                  <span className="inline-flex h-6 items-center justify-center rounded-md bg-emerald-100 px-2 font-bold text-emerald-800">
-                    {outClassCommittedCredits}
-                  </span>
-                </div>
-                {effectivePathway && (
-                  <div className="mb-4 space-y-1">
-                    <p className="text-xs font-semibold text-primary">
-                      Showing initiatives for: {pathwayLabelMap[effectivePathway]}
+                <button 
+                  type="button" 
+                  onClick={() => setShowOutClassSection(!showOutClassSection)}
+                  className="w-full flex items-start justify-between text-left group"
+                >
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="w-12 h-12 rounded-xl bg-emerald-500 text-white inline-flex items-center justify-center shadow-sm">
+                        <Lightbulb className="w-6 h-6" />
+                      </span>
+                      <h2 className="text-4xl font-bold text-foreground leading-none">Outside Class</h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Experiential learning through real-world projects, certifications, and professional opportunities.
                     </p>
-                    {effectiveTier && (
-                      <p className="text-xs font-semibold text-primary/80">
-                        Selected salary track: {tierLabelMap[effectiveTier]}
-                      </p>
+                  </div>
+                  <div className="mt-2 shrink-0 w-8 h-8 rounded-full bg-emerald-100/50 flex items-center justify-center text-emerald-700 transition-colors group-hover:bg-emerald-200">
+                    {showOutClassSection ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </button>
+
+                {showOutClassSection && (
+                  <div className="mt-5 animate-fade-in">
+                    <div className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100/30 px-3 py-2 text-sm">
+                      <span className="font-semibold text-emerald-700">Out-Class Credits Committed:</span>
+                      <span className="inline-flex h-6 items-center justify-center rounded-md bg-emerald-100 px-2 font-bold text-emerald-800">
+                        {outClassCommittedCredits}
+                      </span>
+                    </div>
+                    {effectivePathway && (
+                      <div className="mb-4 space-y-1">
+                        <p className="text-xs font-semibold text-primary">
+                          Showing initiatives for: {pathwayLabelMap[effectivePathway]}
+                        </p>
+                        {effectiveTier && (
+                          <p className="text-xs font-semibold text-primary/80">
+                            Selected salary track: {tierLabelMap[effectiveTier]}
+                          </p>
+                        )}
+                      </div>
                     )}
+
+                    <div className="mb-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setBenefitsTableOpen(true)}
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        View Benefits Table
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {activeTermSelectedCourses.map((course) => {
+                        const theme = getCourseTheme(course.courseCode);
+                        const Icon = theme.icon;
+                        return (
+                          <button
+                            key={course.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveOutClassCourseCode(course.courseCode);
+                              setActiveOutClassCategory(groupedOutClassEntries[0]?.[0] || null);
+                            }}
+                            className={`rounded-xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 ${theme.card}`}
+                          >
+                            <span className={`w-10 h-10 rounded-xl inline-flex items-center justify-center mb-4 ${theme.iconWrap}`}>
+                              <Icon className="w-5 h-5" />
+                            </span>
+                            <p className={`text-lg font-bold ${theme.title}`}>{course.courseCode}</p>
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 min-h-10 leading-relaxed">{course.name}</p>
+                            <div className="mt-3 flex items-center justify-between">
+                              <p className={`text-xs font-semibold ${theme.accent}`}>
+                                View initiatives
+                              </p>
+                              <span className={`w-6 h-6 rounded-full flex items-center justify-center bg-white/50 text-current opacity-60`}>
+                                →
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+
+                      {activeTermSelectedCourses.length === 0 && (
+                        <div className="col-span-full rounded-xl border border-dashed border-emerald-200 bg-card/70 p-4 text-sm text-muted-foreground">
+                          No courses available for this term yet.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-
-                <div className="mb-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setBenefitsTableOpen(true)}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    View Benefits Table
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {activeTermSelectedCourses.map((course) => {
-                    const theme = getCourseTheme(course.courseCode);
-                    const Icon = theme.icon;
-                    return (
-                      <button
-                        key={course.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveOutClassCourseCode(course.courseCode);
-                          setActiveOutClassCategory(groupedOutClassEntries[0]?.[0] || null);
-                        }}
-                        className={`rounded-xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 ${theme.card}`}
-                      >
-                        <span className={`w-10 h-10 rounded-xl inline-flex items-center justify-center mb-4 ${theme.iconWrap}`}>
-                          <Icon className="w-5 h-5" />
-                        </span>
-                        <p className={`text-lg font-bold ${theme.title}`}>{course.courseCode}</p>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2 min-h-10 leading-relaxed">{course.name}</p>
-                        <div className="mt-3 flex items-center justify-between">
-                          <p className={`text-xs font-semibold ${theme.accent}`}>
-                            View initiatives
-                          </p>
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center bg-white/50 text-current opacity-60`}>
-                            →
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-
-                  {activeTermSelectedCourses.length === 0 && (
-                    <div className="col-span-full rounded-xl border border-dashed border-emerald-200 bg-card/70 p-4 text-sm text-muted-foreground">
-                      No courses available for this term yet.
-                    </div>
-                  )}
-                </div>
 
                 <Dialog
                   open={!!activeOutClassCourseCode && !!activeOutClassCategory}
@@ -1584,18 +1667,82 @@ const EduRevOverview = () => {
                     <DialogHeader>
                       <div className="flex items-center justify-between gap-3">
                         <DialogTitle>Target vs Achievement — {termYearLabel}</DialogTitle>
-                        <button
-                          type="button"
-                          onClick={handleDownloadProgressPdf}
-                          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border bg-card text-foreground text-xs font-semibold hover:bg-secondary/60 transition-colors"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          Download PDF
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowProfileForm(!showProfileForm)}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                          >
+                            <Lightbulb className="w-3.5 h-3.5" />
+                            Update your profile
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDownloadProgressPdf}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border bg-card text-foreground text-xs font-semibold hover:bg-secondary/60 transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Download PDF
+                          </button>
+                        </div>
                       </div>
                     </DialogHeader>
 
-                    <div className="rounded-lg border border-border bg-secondary/20 p-2">
+                    {showProfileForm && (
+                      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mt-2">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h3 className="text-sm font-bold text-foreground">Profile & Portfolio Details</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Maintain active links for track eligibility and faculty verification.</p>
+                          </div>
+                          {!hasAtLeastOneProfileInput && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700">Action Needed</span>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-semibold text-foreground">GitHub Link</label>
+                            <input
+                              type="url"
+                              value={profileInputs.github}
+                              onChange={(e) => updateProfileInput("github", e.target.value)}
+                              className="mt-1 w-full h-9 rounded border border-border bg-background px-3 text-xs outline-none focus:ring-1 focus:ring-primary"
+                              placeholder="https://github.com/..."
+                            />
+                            {hasGithub && !githubValid && <p className="text-[10px] text-rose-600 mt-1">Invalid URL</p>}
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-foreground">Portfolio Link</label>
+                            <input
+                              type="url"
+                              value={profileInputs.portfolio}
+                              onChange={(e) => updateProfileInput("portfolio", e.target.value)}
+                              className="mt-1 w-full h-9 rounded border border-border bg-background px-3 text-xs outline-none focus:ring-1 focus:ring-primary"
+                              placeholder="https://..."
+                            />
+                            {hasPortfolio && !portfolioValid && <p className="text-[10px] text-rose-600 mt-1">Invalid URL</p>}
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-semibold text-foreground">Upload CV (PDF/DOC)</label>
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                updateProfileInput("cvFileName", file?.name || "");
+                              }}
+                              className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:h-8 file:px-3 file:rounded file:border file:border-border file:bg-background file:text-foreground hover:file:bg-secondary"
+                            />
+                            {hasCvFile && (
+                              <p className="text-[11px] text-emerald-700 mt-1">Uploaded: {profileInputs.cvFileName}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="rounded-lg border border-border bg-secondary/20 p-2 mt-2">
                       <p className="text-[11px] font-semibold text-muted-foreground px-2 py-1">Term-wise tracker view</p>
                       <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
                         {[1, 2, 3, 4, 5, 6, 7, 8].map((term) => {
@@ -1790,6 +1937,147 @@ const EduRevOverview = () => {
               </div>
             )}
           </div>
+
+          {showEduRevExperience && (
+            <>
+              <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Target className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground">Track Requirements Overview</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                    For Term {selectedTerm}, you need to complete all <span className="font-semibold text-foreground">{inClassRequiredCredits} in-class credits</span> and a minimum of <span className="font-semibold text-foreground bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">{requiredMinOutClass} out-class credits</span> to maintain your standing in the {effectiveTier ? tierLabelMap[effectiveTier] : 'selected'} track.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground">Outside class credit earned percentage</h3>
+                      <p className="text-xs text-amber-600 mt-2 font-medium bg-amber-50 px-3 py-2 rounded-md inline-block border border-amber-200">
+                        Note: Only up to 70% of total credits can be earned from outside class activities.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1 bg-secondary/30 border border-border rounded-lg p-1 shrink-0 self-start md:self-end">
+                      <button 
+                        onClick={() => setShowPieChart(false)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${!showPieChart ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                      >
+                        <BarChart2 className="w-4 h-4" /> Bars
+                      </button>
+                      <button 
+                        onClick={() => setShowPieChart(true)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${showPieChart ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                      >
+                        <PieChartIcon className="w-4 h-4" /> Pie
+                      </button>
+                    </div>
+                  </div>
+
+                  {!showPieChart ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-2">
+                      {/* In-Class Credits Status */}
+                      <div className="flex flex-col justify-center">
+                        <div className="flex items-center justify-between mb-3 border-b border-border pb-2">
+                          <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">In-Class Credits</span>
+                          <span className="text-sm font-bold text-foreground">
+                            {inClassRequiredCredits} / {inClassRequiredCredits}
+                          </span>
+                        </div>
+                        <div className="h-3 w-full bg-secondary rounded-full overflow-hidden shadow-inner mb-2 bg-blue-100">
+                          <div className="h-full bg-blue-500 rounded-full w-full" />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground italic">Mandatory core curriculum requirement</p>
+                      </div>
+
+                      {/* Out-Class Credits Status */}
+                      <div className="flex flex-col justify-center">
+                        <div className="flex items-center justify-between mb-3 border-b border-border pb-2">
+                          <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Out-Class Credits</span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${completedCredits >= requiredMinOutClass ? 'bg-emerald-100 text-emerald-700' : 'bg-primary/10 text-primary'}`}>
+                              {completedCredits >= requiredMinOutClass ? 'On Track' : 'In Progress'}
+                            </span>
+                            <span className="text-sm font-bold text-foreground">
+                              {completedCredits} / {requiredMinOutClass} min
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-3 w-full bg-secondary rounded-full overflow-hidden shadow-inner mb-2">
+                          <div 
+                            className={`h-full rounded-full transition-all ${completedCredits >= requiredMinOutClass ? 'bg-emerald-500' : 'bg-primary'}`}
+                            style={{ width: `${Math.min(100, (completedCredits / requiredMinOutClass) * 100 || 0)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center text-[11px] mt-1">
+                          <span className="text-muted-foreground">Progress towards minimum requirement</span>
+                          <span className="font-bold text-foreground">{Math.min(100, Math.round((completedCredits / requiredMinOutClass) * 100) || 0)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-[250px] w-full mt-2 relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPieChart>
+                          <Pie
+                            data={[
+                              { name: 'In-Class Required', value: inClassRequiredCredits, color: '#3b82f6' },
+                              { name: 'Out-Class Earned', value: completedCredits, color: '#10b981' },
+                              { name: 'Out-Class Remaining Target', value: Math.max(0, requiredMinOutClass - completedCredits), color: '#cbd5e1' }
+                            ].filter(item => item.value > 0)}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={95}
+                            paddingAngle={3}
+                          >
+                            {
+                              [
+                                { name: 'In-Class Required', value: inClassRequiredCredits, color: '#3b82f6' },
+                                { name: 'Out-Class Earned', value: completedCredits, color: '#10b981' },
+                                { name: 'Out-Class Remaining Target', value: Math.max(0, requiredMinOutClass - completedCredits), color: '#cbd5e1' }
+                              ].filter(item => item.value > 0).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                              ))
+                            }
+                          </Pie>
+                          <RechartsTooltip 
+                            formatter={(value: number) => [`${value} Credits`, '']}
+                            contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '13px' }}
+                          />
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                      
+                      <div className="absolute top-0 right-0 md:top-auto md:bottom-0 md:left-0 flex flex-col gap-2 p-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                          <span className="text-xs text-muted-foreground font-medium">In-Class Required</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                          <span className="text-xs text-muted-foreground font-medium">Out-Class Earned</span>
+                        </div>
+                        {Math.max(0, requiredMinOutClass - completedCredits) > 0 && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-slate-300"></div>
+                            <span className="text-xs text-muted-foreground font-medium">Out-Class Target</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-4">
             <p className="text-2xl font-bold text-foreground">Ready to Choose Your Benefits?</p>

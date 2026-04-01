@@ -3,7 +3,7 @@ import { ArrowLeft, BookOpen, Target, Award, Briefcase, ExternalLink, CalendarCl
 import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
 
 type TierPlan = {
-  salary: "₹50 LPA Track" | "₹30 LPA Track" | "₹20 LPA Track";
+  salary: "Above ₹25 LPA Track" | "₹10-25 LPA Track" | "Up to ₹10 LPA Track";
   role: string;
   dataFocus: string;
   certifications: string[];

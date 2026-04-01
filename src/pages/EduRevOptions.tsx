@@ -30,6 +30,7 @@ const OPTION_BENEFITS: Record<EduRevOptionType, string[]> = {
     "Improved practical readiness and interview portfolio",
   ],
   social_media: [
+  
     "Academic visibility for your technical work",
     "Personal branding guidance for professional platforms",
     "Evidence-based recognition for quality contributions",

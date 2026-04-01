@@ -1,6 +1,16 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface EduRevDisclaimerModalProps {
   open: boolean;
@@ -11,9 +21,11 @@ interface EduRevDisclaimerModalProps {
 
 const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlow }: EduRevDisclaimerModalProps) => {
   const isEligible = Boolean(isHighPerformanceFlow);
+  const [showExitAlert, setShowExitAlert] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
+    <>
+      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl">
         <DialogHeader>
           <div className="flex items-start gap-3">
@@ -41,7 +53,7 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlo
           <Button
             variant="outline"
             onClick={() => {
-              window.location.replace("https://edurev.vercel.app/");
+              setShowExitAlert(true);
             }}
             className="h-10 px-6"
           >
@@ -56,6 +68,23 @@ const EduRevDisclaimerModal = ({ open, onConfirm, onCancel, isHighPerformanceFlo
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      <AlertDialog open={showExitAlert} onOpenChange={setShowExitAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conventional Mode</AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-foreground mt-2">
+              Not eligible yet? Start in Conventional Mode and upgrade to ‘Learning by Doing’ by achieving the required milestones.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => window.location.replace("https://edurev.vercel.app/")}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

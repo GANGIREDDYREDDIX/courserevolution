@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
-import EduRevDisclaimerModal from "@/components/edurev/EduRevDisclaimerModal";
+
 import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, PencilLine } from "lucide-react";
 
 const FLOW_STORAGE_KEY = "course-navigator-flow-inputs";
-const PROFILE_STORAGE_KEY = "course-navigator-profile-inputs";
 const CGPA_THRESHOLD = 8;
 const MARKS_THRESHOLD = 75;
 
@@ -23,37 +22,14 @@ const loadSavedFlowInputs = () => {
   }
 };
 
-const loadSavedProfileInputs = () => {
-  try {
-    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (!raw) return { github: "", portfolio: "", cvFileName: "" };
-    const parsed = JSON.parse(raw) as { github?: string; portfolio?: string; cvFileName?: string };
-    return {
-      github: typeof parsed.github === "string" ? parsed.github : "",
-      portfolio: typeof parsed.portfolio === "string" ? parsed.portfolio : "",
-      cvFileName: typeof parsed.cvFileName === "string" ? parsed.cvFileName : "",
-    };
-  } catch {
-    return { github: "", portfolio: "", cvFileName: "" };
-  }
-};
-
-const isValidUrl = (value: string) => {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-};
-
 const ReviewAll = () => {
   const navigate = useNavigate();
   const { student, categories, selections, getCreditsUsed, areAllCategoriesSelected, getUnselectedCategoryNames } = useStudent();
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
+
   const [flowInputs, setFlowInputs] = useState(loadSavedFlowInputs);
-  const [profileInputs, setProfileInputs] = useState(loadSavedProfileInputs);
+  const [showAcademic, setShowAcademic] = useState(true);
+  const [showCategories, setShowCategories] = useState(false);
 
   const allCategoriesSelected = areAllCategoriesSelected();
   const remaining = getUnselectedCategoryNames();
@@ -70,16 +46,7 @@ const ReviewAll = () => {
     ? "You qualify for an advanced pathway with tier planning and goal-based progression."
     : "You will start with a foundation-first pathway focused on strengthening readiness and consistency.";
 
-  const githubTrimmed = profileInputs.github.trim();
-  const portfolioTrimmed = profileInputs.portfolio.trim();
-  const hasCvFile = profileInputs.cvFileName.trim().length > 0;
-  const hasGithub = githubTrimmed.length > 0;
-  const hasPortfolio = portfolioTrimmed.length > 0;
-  const githubValid = !hasGithub || isValidUrl(githubTrimmed);
-  const portfolioValid = !hasPortfolio || isValidUrl(portfolioTrimmed);
-  const hasInvalidProfileLinks = !githubValid || !portfolioValid;
-  const hasAtLeastOneProfileInput = hasCvFile || hasGithub || hasPortfolio;
-  const canProceed = hasValidAcademicInputs && hasAtLeastOneProfileInput && !hasInvalidProfileLinks;
+  const canProceed = hasValidAcademicInputs;
 
   const toggleExpanded = (categoryId: string) => {
     setExpandedCategoryIds((prev) =>
@@ -95,12 +62,6 @@ const ReviewAll = () => {
     localStorage.setItem(FLOW_STORAGE_KEY, JSON.stringify(next));
   };
 
-  const updateProfileInput = (key: "github" | "portfolio" | "cvFileName", value: string) => {
-    const next = { ...profileInputs, [key]: value };
-    setProfileInputs(next);
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-  };
-
   const proceedByFlow = () => {
     if (!canProceed) return;
 
@@ -110,9 +71,6 @@ const ReviewAll = () => {
           flowType: "advanced",
           cgpa,
           marks,
-          github: githubTrimmed,
-          portfolio: portfolioTrimmed,
-          cvFileName: profileInputs.cvFileName,
         },
       });
       return;
@@ -123,9 +81,6 @@ const ReviewAll = () => {
         flowType: "foundation",
         cgpa,
         marks,
-        github: githubTrimmed,
-        portfolio: portfolioTrimmed,
-        cvFileName: profileInputs.cvFileName,
       },
     });
   };
@@ -154,15 +109,24 @@ const ReviewAll = () => {
 
   return (
     <div className="py-8 max-w-4xl mx-auto animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Review All Course Categories</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Verify selections across all categories before continuing to term initiatives.
-        </p>
-      </div>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <button 
+          onClick={() => setShowCategories(!showCategories)}
+          className="w-full flex items-center justify-between p-4 md:p-5 bg-card hover:bg-secondary/20 transition-colors"
+        >
+          <div className="text-left">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Review All Course Categories</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Verify selections across all categories before continuing to term initiatives.
+            </p>
+          </div>
+          {showCategories ? <ChevronUp className="w-6 h-6 text-muted-foreground" /> : <ChevronDown className="w-6 h-6 text-muted-foreground" />}
+        </button>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {categories.map((category) => {
+        {showCategories && (
+          <div className="p-4 md:p-5 border-t border-border bg-secondary/5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {categories.map((category) => {
           const selectedCount = selections[category.id]?.selectedCourseIds?.length || 0;
           const selectedCourseIds = selections[category.id]?.selectedCourseIds || [];
           const selectedCourses = category.courses.filter((course) => selectedCourseIds.includes(course.id));
@@ -243,6 +207,9 @@ const ReviewAll = () => {
             </div>
           );
         })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 flex items-center justify-between">
@@ -260,22 +227,36 @@ const ReviewAll = () => {
               window.location.replace("https://edurev.vercel.app/");
               return;
             }
-            setShowDisclaimer(true);
+            proceedByFlow();
           }}
+          className={`inline-flex items-center gap-2 h-10 px-6 rounded-lg font-bold text-sm shadow-sm transition-all ${
+            canProceed
+              ? "bg-primary text-white hover:bg-primary/90"
+              : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
+          }`}
           disabled={!canProceed}
-          className="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isEligibleStudent ? "Select your Learning Preference" : "Continue to Conventional Method"}
+          Select your Learning Pathway
         </button>
       </div>
 
-      <div className="mt-6 rounded-xl border border-border bg-card p-4">
-        <h2 className="text-sm font-bold text-foreground">Academic Eligibility Flow</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          We use CGPA and current marks to assign one of two student flows after category selection.
-        </p>
+      <div className="mt-6 rounded-xl border border-border bg-card overflow-hidden">
+        <button 
+          onClick={() => setShowAcademic(!showAcademic)}
+          className="w-full flex items-center justify-between p-4 bg-secondary/20 hover:bg-secondary/40 transition-colors"
+        >
+          <div className="text-left">
+            <h2 className="text-sm font-bold text-foreground">Academic Eligibility Flow</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              We use CGPA and current marks to assign one of two student flows.
+            </p>
+          </div>
+          {showAcademic ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+        </button>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        {showAcademic && (
+          <div className="p-4 border-t border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="cgpa-input" className="text-xs font-semibold text-foreground">CGPA (0-10)</label>
             <input
@@ -327,86 +308,9 @@ const ReviewAll = () => {
           </div>
         )}
 
-        {hasValidAcademicInputs && (
-          <p className="text-xs font-semibold text-primary mt-3">
-            Selected: {selectedFlowTitle} — {selectedFlowDescription}
-          </p>
+          </div>
         )}
       </div>
-
-      <div className="mt-6 rounded-xl border border-border bg-card p-4">
-        <h2 className="text-sm font-bold text-foreground">Profile & Portfolio Details</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Collect this before pathway selection. Add at least one: CV upload, GitHub URL, or Portfolio URL.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          <div>
-            <label htmlFor="github-input" className="text-xs font-semibold text-foreground">GitHub Link</label>
-            <input
-              id="github-input"
-              type="url"
-              value={profileInputs.github}
-              onChange={(event) => updateProfileInput("github", event.target.value)}
-              className="mt-1 w-full h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-              placeholder="https://github.com/username"
-            />
-            {hasGithub && !githubValid && (
-              <p className="text-[11px] text-rose-600 mt-1">Enter a valid http/https URL.</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="portfolio-input" className="text-xs font-semibold text-foreground">Portfolio Link</label>
-            <input
-              id="portfolio-input"
-              type="url"
-              value={profileInputs.portfolio}
-              onChange={(event) => updateProfileInput("portfolio", event.target.value)}
-              className="mt-1 w-full h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-              placeholder="https://yourportfolio.com"
-            />
-            {hasPortfolio && !portfolioValid && (
-              <p className="text-[11px] text-rose-600 mt-1">Enter a valid http/https URL.</p>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="cv-input" className="text-xs font-semibold text-foreground">Upload CV (PDF/DOC)</label>
-          <input
-            id="cv-input"
-            type="file"
-            accept=".pdf,.doc,.docx"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              updateProfileInput("cvFileName", file?.name || "");
-            }}
-            className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-background file:text-foreground"
-          />
-          {hasCvFile && (
-            <p className="text-[11px] text-emerald-700 mt-1">Selected CV: {profileInputs.cvFileName}</p>
-          )}
-        </div>
-
-        {!hasAtLeastOneProfileInput && (
-          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-3">
-            Add at least one profile input to continue.
-          </p>
-        )}
-      </div>
-
-      <EduRevDisclaimerModal
-        open={showDisclaimer}
-        isHighPerformanceFlow={isEligibleStudent}
-        onConfirm={() => {
-          setShowDisclaimer(false);
-          proceedByFlow();
-        }}
-        onCancel={() => {
-          setShowDisclaimer(false);
-        }}
-      />
     </div>
   );
 };
