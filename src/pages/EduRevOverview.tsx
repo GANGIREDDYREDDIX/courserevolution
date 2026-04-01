@@ -22,9 +22,82 @@ import {
   Laptop,
   Network,
   Target,
-  Eye
+  Eye,
+  Terminal,
+  Cpu,
+  TestTube,
+  Calculator,
+  Database,
+  Zap,
+  Shield
 } from "lucide-react";
 import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
+
+const getCourseTheme = (courseCode: string) => {
+  const code = courseCode.toUpperCase();
+  if (code.startsWith("CSE") || code.startsWith("INT")) {
+    return {
+      card: "bg-blue-50/60 border-blue-200 hover:border-blue-300 hover:shadow-blue-100",
+      iconWrap: "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md shadow-blue-500/20 text-white",
+      icon: Terminal,
+      title: "text-blue-950",
+      accent: "text-blue-600",
+    };
+  }
+  if (code.startsWith("CHE") || code.startsWith("PHY")) {
+    return {
+      card: "bg-emerald-50/60 border-emerald-200 hover:border-emerald-300 hover:shadow-emerald-100",
+      iconWrap: "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20 text-white",
+      icon: TestTube,
+      title: "text-emerald-950",
+      accent: "text-emerald-700",
+    };
+  }
+  if (code.startsWith("MTH") || code.startsWith("MAT")) {
+    return {
+      card: "bg-rose-50/60 border-rose-200 hover:border-rose-300 hover:shadow-rose-100",
+      iconWrap: "bg-gradient-to-br from-rose-500 to-pink-600 shadow-md shadow-rose-500/20 text-white",
+      icon: Calculator,
+      title: "text-rose-950",
+      accent: "text-rose-600",
+    };
+  }
+  if (code.startsWith("ECE") || code.startsWith("EEE")) {
+    return {
+      card: "bg-amber-50/60 border-amber-200 hover:border-amber-300 hover:shadow-amber-100",
+      iconWrap: "bg-gradient-to-br from-amber-500 to-orange-600 shadow-md shadow-amber-500/20 text-white",
+      icon: Cpu,
+      title: "text-amber-950",
+      accent: "text-amber-700",
+    };
+  }
+  
+  const palettes = [
+    {
+      card: "bg-purple-50/60 border-purple-200 hover:border-purple-300 hover:shadow-purple-100",
+      iconWrap: "bg-gradient-to-br from-purple-500 to-fuchsia-600 shadow-md shadow-purple-500/20 text-white",
+      icon: Database,
+      title: "text-purple-950",
+      accent: "text-purple-600",
+    },
+    {
+      card: "bg-cyan-50/60 border-cyan-200 hover:border-cyan-300 hover:shadow-cyan-100",
+      iconWrap: "bg-gradient-to-br from-cyan-500 to-sky-600 shadow-md shadow-cyan-500/20 text-white",
+      icon: Zap,
+      title: "text-cyan-950",
+      accent: "text-cyan-700",
+    },
+    {
+      card: "bg-indigo-50/60 border-indigo-200 hover:border-indigo-300 hover:shadow-indigo-100",
+      iconWrap: "bg-gradient-to-br from-indigo-500 to-violet-600 shadow-md shadow-indigo-500/20 text-white",
+      icon: Shield,
+      title: "text-indigo-950",
+      accent: "text-indigo-600",
+    }
+  ];
+  const hash = Array.from(code).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return palettes[hash % palettes.length];
+};
 
 // Dummy data for each term
 const termDetails: Record<number, {
@@ -691,30 +764,8 @@ const EduRevOverview = () => {
   const termYearLabel = `Year ${Math.ceil(selectedTerm / 2)} Sem ${selectedTerm % 2 === 1 ? 1 : 2}`;
   const activeTermBenefitsRows = buildOutClassBenefitRows(activeTermSelectedCourses);
 
-  useEffect(() => {
-    if (!activeOutClassCategory) {
-      setActiveOutClassCourseCode(null);
-      return;
-    }
+  // Modal state management simplified
 
-    const fromSelection = outClassCategoryCourseSelection[activeOutClassCategory]?.[0] || null;
-    const firstAvailable = activeTermCourseCodes[0] || null;
-    const fallbackCode = fromSelection || firstAvailable;
-
-    if (!activeOutClassCourseCode) {
-      setActiveOutClassCourseCode(fallbackCode);
-      return;
-    }
-
-    if (!activeTermCourseCodes.includes(activeOutClassCourseCode)) {
-      setActiveOutClassCourseCode(fallbackCode);
-    }
-  }, [
-    activeOutClassCategory,
-    activeOutClassCourseCode,
-    activeTermCourseCodes,
-    outClassCategoryCourseSelection,
-  ]);
 
   const getCourseCategoryKey = (category: string, courseCode: string) => `${category}::${courseCode}`;
 
@@ -927,6 +978,18 @@ const EduRevOverview = () => {
   const completedCredits = completedRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
   const pendingCredits = pendingRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
 
+  let requiredMinOutClass = 0;
+  if (effectiveTier === "tier_50") requiredMinOutClass = Math.ceil(termTotalCredits * 0.4);
+  else if (effectiveTier === "tier_30") requiredMinOutClass = Math.ceil(termTotalCredits * 0.3);
+  else if (effectiveTier === "tier_20") requiredMinOutClass = Math.ceil(termTotalCredits * 0.2);
+  else requiredMinOutClass = Math.ceil(termTotalCredits * 0.1);
+
+  const pendingButNotSubmitted = Math.max(0, outClassCommittedCredits - completedCredits - pendingCredits);
+  const completedPct = termTotalCredits > 0 ? (completedCredits / termTotalCredits) * 100 : 0;
+  const pendingPct = termTotalCredits > 0 ? (pendingCredits / termTotalCredits) * 100 : 0;
+  const unsubmittedPct = termTotalCredits > 0 ? (pendingButNotSubmitted / termTotalCredits) * 100 : 0;
+  const minRequiredPct = termTotalCredits > 0 ? (requiredMinOutClass / termTotalCredits) * 100 : 0;
+
   const curriculumRows = selectedCourses
     .slice()
     .sort((a, b) => a.term - b.term || a.name.localeCompare(b.name))
@@ -944,7 +1007,7 @@ const EduRevOverview = () => {
 
   const handleDownloadProgressPdf = () => {
     const doc = new jsPDF({ orientation: "portrait" });
-    const title = `Semester Progress Tracker - ${termYearLabel}`;
+    const title = `Target vs Achievement - ${termYearLabel}`;
     const generatedAt = `Generated: ${new Date().toLocaleString()}`;
 
     doc.setFontSize(16);
@@ -987,7 +1050,7 @@ const EduRevOverview = () => {
     });
 
     doc.save(`progress-tracker-${selectedTerm}.pdf`);
-    toast.success("Progress tracker PDF downloaded");
+    toast.success("Target vs Achievement PDF downloaded");
   };
 
   const handleDownloadPdf = () => {
@@ -1107,7 +1170,7 @@ const EduRevOverview = () => {
                 className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors"
               >
                 <Target className="w-3.5 h-3.5" />
-                Progress Tracker
+                Target vs Achievement
               </button>
             </div>
           )}
@@ -1143,6 +1206,13 @@ const EduRevOverview = () => {
                 Structured curriculum with comprehensive coverage of core concepts and technologies.
               </p>
 
+              <div className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-100/30 px-3 py-2 text-sm">
+                <span className="font-semibold text-blue-700">In-Class Credits Requirement:</span>
+                <span className="inline-flex h-6 items-center justify-center rounded-md bg-blue-100 px-2 font-bold text-blue-800">
+                  {inClassRequiredCredits} / {termTotalCredits} Total
+                </span>
+              </div>
+
               <div className="space-y-3">
                 {selectedTermDetails.inClass.slice(0, 3).map((course) => (
                   <div key={course.code} className="rounded-xl border border-blue-100 bg-card p-4">
@@ -1177,6 +1247,13 @@ const EduRevOverview = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Experiential learning through real-world projects, certifications, and professional opportunities.
                 </p>
+
+                <div className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100/30 px-3 py-2 text-sm">
+                  <span className="font-semibold text-emerald-700">Out-Class Credits Committed:</span>
+                  <span className="inline-flex h-6 items-center justify-center rounded-md bg-emerald-100 px-2 font-bold text-emerald-800">
+                    {outClassCommittedCredits}
+                  </span>
+                </div>
                 {effectivePathway && (
                   <div className="mb-4 space-y-1">
                     <p className="text-xs font-semibold text-primary">
@@ -1202,90 +1279,86 @@ const EduRevOverview = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {groupedOutClassEntries.map(([category, items]) => {
-                    const preview = items[0];
-                    const Icon = preview.icon;
-                    const theme = outClassTheme[category] || {
-                      card: "bg-slate-50 border-slate-200",
-                      iconWrap: "bg-slate-500",
-                      icon: "text-white",
-                      title: "text-slate-700",
-                    };
-
+                  {activeTermSelectedCourses.map((course) => {
+                    const theme = getCourseTheme(course.courseCode);
+                    const Icon = theme.icon;
                     return (
                       <button
-                        key={category}
+                        key={course.id}
                         type="button"
-                        onClick={() => setActiveOutClassCategory(category)}
-                        className={`rounded-xl border p-4 text-left ${theme.card} hover:shadow-sm transition-shadow`}
+                        onClick={() => {
+                          setActiveOutClassCourseCode(course.courseCode);
+                          setActiveOutClassCategory(groupedOutClassEntries[0]?.[0] || null);
+                        }}
+                        className={`rounded-xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 ${theme.card}`}
                       >
-                        <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center mb-3 ${theme.iconWrap}`}>
-                          <Icon className={`w-4 h-4 ${theme.icon}`} />
+                        <span className={`w-10 h-10 rounded-xl inline-flex items-center justify-center mb-4 ${theme.iconWrap}`}>
+                          <Icon className="w-5 h-5" />
                         </span>
-                        <p className={`text-lg font-bold ${theme.title}`}>{category}</p>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{preview.description}</p>
-                        <p className="text-xs font-semibold text-primary mt-2">
-                          View details ({items.length})
-                        </p>
-                        {!!outClassCategoryCourseSelection[category]?.length && (
-                          <p className="text-[11px] font-semibold text-foreground/80 mt-1">
-                            Selected course codes: {outClassCategoryCourseSelection[category].join(", ")}
+                        <p className={`text-lg font-bold ${theme.title}`}>{course.courseCode}</p>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2 min-h-10 leading-relaxed">{course.name}</p>
+                        <div className="mt-3 flex items-center justify-between">
+                          <p className={`text-xs font-semibold ${theme.accent}`}>
+                            View initiatives
                           </p>
-                        )}
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center bg-white/50 text-current opacity-60`}>
+                            →
+                          </span>
+                        </div>
                       </button>
                     );
                   })}
 
-                  {groupedOutClassEntries.length === 0 && (
+                  {activeTermSelectedCourses.length === 0 && (
                     <div className="col-span-full rounded-xl border border-dashed border-emerald-200 bg-card/70 p-4 text-sm text-muted-foreground">
-                      No outside-class initiatives available for this term yet.
+                      No courses available for this term yet.
                     </div>
                   )}
                 </div>
 
                 <Dialog
-                  open={!!activeOutClassCategory}
+                  open={!!activeOutClassCourseCode && !!activeOutClassCategory}
                   onOpenChange={(isOpen) => {
                     if (!isOpen) {
+                      setActiveOutClassCourseCode(null);
                       setActiveOutClassCategory(null);
                     }
                   }}
                 >
                   <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                      <DialogTitle>{activeOutClassCategory} Initiatives</DialogTitle>
+                      <DialogTitle>Initiatives for {activeOutClassCourseCode}</DialogTitle>
                     </DialogHeader>
 
                     <div className="rounded-lg border border-border bg-secondary/20 p-3">
                       <p className="text-xs font-semibold text-foreground mb-2">
-                        Select course codes for this category ({termYearLabel})
+                        Select category for this course ({termYearLabel})
                       </p>
 
-                      {activeOutClassCategory && activeTermSelectedCourses.length > 0 ? (
+                      {activeOutClassCourseCode && groupedOutClassEntries.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {activeTermSelectedCourses.map((course) => {
-                            const isSelected = (outClassCategoryCourseSelection[activeOutClassCategory] || []).includes(course.courseCode);
+                          {groupedOutClassEntries.map(([category]) => {
+                            const isSelected = (outClassCategoryCourseSelection[category] || []).includes(activeOutClassCourseCode);
                             return (
                               <button
-                                key={course.id}
+                                key={category}
                                 type="button"
-                                onClick={() => previewOutClassCourseCode(course.courseCode)}
+                                onClick={() => setActiveOutClassCategory(category)}
                                 className={`h-8 px-3 rounded-full text-xs font-semibold border transition-colors ${
-                                  activeOutClassCourseCode === course.courseCode
+                                  activeOutClassCategory === category
                                     ? "border-primary bg-primary text-white"
                                     : isSelected
                                       ? "border-primary bg-primary/10 text-primary"
                                     : "border-border bg-card text-foreground hover:bg-secondary"
                                 }`}
-                                title={course.name}
                               >
-                                {course.courseCode}
+                                {category}
                               </button>
                             );
                           })}
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground">No selected course codes found for this term.</p>
+                        <p className="text-xs text-muted-foreground">No categories found for this term.</p>
                       )}
 
                       {activeOutClassCategory && activeOutClassCourseCode && (
@@ -1510,7 +1583,7 @@ const EduRevOverview = () => {
                   <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
                       <div className="flex items-center justify-between gap-3">
-                        <DialogTitle>Semester Progress Tracker — {termYearLabel}</DialogTitle>
+                        <DialogTitle>Target vs Achievement — {termYearLabel}</DialogTitle>
                         <button
                           type="button"
                           onClick={handleDownloadProgressPdf}
@@ -1561,9 +1634,51 @@ const EduRevOverview = () => {
                         </div>
                       </div>
 
-                      <p className="text-xs text-muted-foreground mt-3">
-                        Example logic: if total is 24 credits and out-class commitment is 14, in-class requirement becomes 10.
-                      </p>
+                      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+                        <div className="flex items-start gap-2.5">
+                          <Target className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-amber-900">
+                              Track Requirement: {effectiveTier ? tierLabelMap[effectiveTier] : "EduRev Track"}
+                            </p>
+                            <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                              You must successfully complete a minimum of <strong className="text-amber-900 bg-amber-200/50 px-1 rounded">{requiredMinOutClass} out-class credits</strong> this semester to remain in your selected track. Failure to meet this requirement may result in being downgraded to a lower track or removed.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-5 pt-4 border-t border-amber-200/50">
+                          <div className="flex items-center justify-between text-xs mb-8 font-semibold">
+                            <span className="text-amber-900">Out-Class Progress vs Target</span>
+                            <span className="text-amber-700">{completedCredits} / {requiredMinOutClass} Verified Credits</span>
+                          </div>
+                          
+                          <div className="relative h-3 w-full bg-slate-200/80 rounded-full flex mb-4 shadow-inner">
+                            <div className="h-full bg-emerald-500 rounded-l-full transition-all" style={{ width: `${completedPct}%` }} title={`Completed: ${completedCredits}`} />
+                            <div className="h-full bg-blue-400 transition-all" style={{ width: `${pendingPct}%` }} title={`Pending Verification: ${pendingCredits}`} />
+                            <div className="h-full bg-amber-400/90 transition-all" style={{ width: `${unsubmittedPct}%` }} title={`Draft / Unsubmitted: ${pendingButNotSubmitted}`} />
+                            
+                            {minRequiredPct > 0 && (
+                              <div 
+                                className="absolute top-0 bottom-0 w-[3px] bg-rose-600 z-10 shadow-[0_0_4px_rgba(225,29,72,0.8)]" 
+                                style={{ left: `${minRequiredPct}%` }} 
+                                title={`Minimum Required: ${requiredMinOutClass}`}
+                              >
+                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-rose-600 whitespace-nowrap">
+                                  Target ({requiredMinOutClass})
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-amber-800 font-medium">
+                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 shadow-sm"></div>Completed ({completedCredits})</div>
+                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400 shadow-sm"></div>Pending Review ({pendingCredits})</div>
+                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-amber-400/90 shadow-sm"></div>Draft/Selected ({pendingButNotSubmitted})</div>
+                            <div className="flex items-center gap-1.5"><div className="w-[3px] h-3 bg-rose-600 rounded-[1px] shadow-sm"></div>Track Minimum ({requiredMinOutClass})</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="rounded-lg border border-border bg-card p-4">
