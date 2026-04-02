@@ -1715,7 +1715,7 @@ const EduRevOverview = () => {
                 </Dialog>
 
                 <Dialog open={progressTrackerOpen} onOpenChange={setProgressTrackerOpen}>
-                  <DialogContent className="sm:max-w-3xl">
+                  <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <div className="flex items-center justify-between gap-3">
                         <DialogTitle>Target vs Achievement — {termYearLabel}</DialogTitle>
