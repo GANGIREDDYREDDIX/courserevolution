@@ -64,18 +64,18 @@ const salaryToTierId: Record<TierPlan["salary"], EduRevTierId> = {
   "Up to ₹10 LPA Track": "tier_20",
 };
 
-const TIER_RULES: Record<EduRevTierId, { label: string; check: (cgpa: number, marks: number) => boolean }> = {
+const TIER_RULES: Record<EduRevTierId, { label: string; check: (readinessScore: number) => boolean }> = {
   tier_50: {
-    label: "Level 3 → High proficiency + strong problem-solving + advanced certifications",
-    check: (cgpa, marks) => cgpa >= 9 || marks >= 90,
+    label: "Unlocked when readiness score is above 70",
+    check: (readinessScore) => readinessScore > 70,
   },
   tier_30: {
-    label: "Level 2 → Moderate + certifications required",
-    check: (cgpa, marks) => cgpa >= 8 || marks >= 75,
+    label: "Unlocked when readiness score is between 50 and 70",
+    check: (readinessScore) => readinessScore >= 50 && readinessScore <= 70,
   },
   tier_20: {
-    label: "Level 1 → Basic eligibility",
-    check: (cgpa, marks) => cgpa >= 7 || marks >= 65,
+    label: "Unlocked when readiness score is below 50",
+    check: (readinessScore) => readinessScore < 50,
   },
 };
 
@@ -478,17 +478,33 @@ const EduRevPathway = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { student, selections, setSelectedEduRevPathway, setSelectedEduRevTier } = useStudent();
-  const flowState = location.state as { cgpa?: number; marks?: number } | null;
+  const flowState = location.state as {
+    cgpa?: number;
+    marks?: number;
+    psychometricTest?: number;
+    problemSolvingSkill?: number;
+  } | null;
   const academicCgpa = typeof flowState?.cgpa === "number" && Number.isFinite(flowState?.cgpa) ? flowState.cgpa : student.cgpa;
   const academicMarks = typeof flowState?.marks === "number" && Number.isFinite(flowState?.marks) ? flowState.marks : student.marks;
+  const psychometricTestScore =
+    typeof flowState?.psychometricTest === "number" && Number.isFinite(flowState?.psychometricTest)
+      ? Math.max(0, Math.min(100, Math.round(flowState.psychometricTest)))
+      : Math.max(0, Math.min(100, Math.round((academicCgpa / 10) * 50 + (academicMarks / 100) * 50)));
+  const problemSolvingSkillScore =
+    typeof flowState?.problemSolvingSkill === "number" && Number.isFinite(flowState?.problemSolvingSkill)
+      ? Math.max(0, Math.min(100, Math.round(flowState.problemSolvingSkill)))
+      : Math.max(0, Math.min(100, Math.round((academicCgpa / 10) * 60 + (academicMarks / 100) * 40)));
+
+  const readinessScore = Math.min(100, Math.round((academicCgpa / 10) * 55 + (academicMarks / 100) * 45));
+  const readinessLabel = readinessScore > 70 ? "Excellent" : readinessScore >= 50 ? "Strong" : "Growing";
 
   const tierEligibility = useMemo(() => {
     return {
-      tier_50: TIER_RULES.tier_50.check(academicCgpa, academicMarks),
-      tier_30: TIER_RULES.tier_30.check(academicCgpa, academicMarks),
-      tier_20: TIER_RULES.tier_20.check(academicCgpa, academicMarks),
+      tier_50: TIER_RULES.tier_50.check(readinessScore),
+      tier_30: TIER_RULES.tier_30.check(readinessScore),
+      tier_20: TIER_RULES.tier_20.check(readinessScore),
     };
-  }, [academicCgpa, academicMarks]);
+  }, [readinessScore]);
   const eligibleTierCount = Object.values(tierEligibility).filter(Boolean).length;
 
   // If student is not eligible for any tier, redirect to https://edurev.vercel.app/
@@ -560,9 +576,6 @@ const EduRevPathway = () => {
       window.location.replace("https://edurev.vercel.app/");
     }
   }, [eligibleTierCount]);
-
-  const readinessScore = Math.min(100, Math.round((academicCgpa / 10) * 55 + (academicMarks / 100) * 45));
-  const readinessLabel = readinessScore >= 85 ? "Excellent" : readinessScore >= 70 ? "Strong" : "Growing";
 
   const handleOpenTierDetail = (tier: TierPlan) => {
     if (!selectedPathwayMeta || !selectedPathwayDetails) return;
@@ -693,7 +706,7 @@ const EduRevPathway = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full lg:w-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 w-full lg:w-auto">
               <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
                 <p className="text-[11px] font-semibold text-muted-foreground">CGPA</p>
                 <p className="text-sm font-extrabold text-foreground">{academicCgpa.toFixed(1)}</p>
@@ -709,6 +722,14 @@ const EduRevPathway = () => {
               <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
                 <p className="text-[11px] font-semibold text-muted-foreground">Semester</p>
                 <p className="text-sm font-extrabold text-foreground">{student.term}</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">Psychometric Test</p>
+                <p className="text-sm font-extrabold text-foreground">{psychometricTestScore}%</p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/80 px-3 py-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">Problem Solving Skill</p>
+                <p className="text-sm font-extrabold text-foreground">{problemSolvingSkillScore}%</p>
               </div>
             </div>
           </div>
@@ -743,7 +764,7 @@ const EduRevPathway = () => {
                   <p className="text-[11px] text-muted-foreground mt-0.5">{TIER_RULES[tierId].label}</p>
                   <p className={`mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${isEligible ? "text-emerald-700" : "text-amber-700"}`}>
                     {isEligible ? <CheckCircle2 className="w-3.5 h-3.5" /> : <CircleAlert className="w-3.5 h-3.5" />}
-                    {isEligible ? "Eligible" : "Not eligible"}
+                    {isEligible ? "Unlocked" : "Locked"}
                   </p>
                 </div>
               );
@@ -751,7 +772,7 @@ const EduRevPathway = () => {
           </div>
 
           <p className="text-xs text-muted-foreground mt-3">
-            Eligibility logic: You can choose only tracks where at least one criterion is satisfied.
+            Eligibility logic: tracks unlock directly from your readiness score band.
           </p>
         </div>
         )}
@@ -851,7 +872,7 @@ const EduRevPathway = () => {
 
                 {!tierEligibility[salaryToTierId[tier.salary]] && (
                   <p className="mt-3 text-[11px] font-semibold text-amber-700 bg-amber-100/70 rounded-md px-2 py-1">
-                    Improve CGPA or marks to unlock this track.
+                    Improve your readiness score to unlock this track.
                   </p>
                 )}
 

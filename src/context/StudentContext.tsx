@@ -66,17 +66,34 @@ function loadDemoProfile(): DemoStudentProfileId | null {
 }
 
 function normalizeSelections(raw: Record<string, CategorySelection>): Record<string, CategorySelection> {
-  const normalized: Record<string, CategorySelection> = { ...raw };
+  const normalized: Record<string, CategorySelection> = {};
 
   for (const category of mockCategories) {
+    const existing = raw[category.id];
+
     // Mandatory categories are fixed: all courses stay selected.
     if (!category.isElective) {
-      const existing = raw[category.id];
       normalized[category.id] = {
         selectedCourseIds: category.courses.map((course) => course.id),
         status: existing?.status === "finalized" ? "finalized" : "draft",
       };
+      continue;
     }
+
+    const allowedCourseIds = new Set(category.courses.map((course) => course.id));
+    const selectedCourseIds = Array.isArray(existing?.selectedCourseIds)
+      ? Array.from(new Set(existing.selectedCourseIds)).filter((id) => allowedCourseIds.has(id))
+      : [];
+
+    normalized[category.id] = {
+      selectedCourseIds,
+      status:
+        existing?.status === "finalized"
+          ? "finalized"
+          : selectedCourseIds.length > 0
+            ? "draft"
+            : "not_started",
+    };
   }
 
   return normalized;
@@ -93,7 +110,17 @@ function loadSelections(): Record<string, CategorySelection> {
 function loadEduRevSelections(): Record<string, EduRevSelection> {
   try {
     const raw = localStorage.getItem(EDU_REV_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw) as Record<string, EduRevSelection>;
+    const allowedCategoryIds = new Set(mockCategories.map((category) => category.id));
+    const allowedCourseIds = new Set(mockCategories.flatMap((category) => category.courses.map((course) => course.id)));
+
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, value]) =>
+        allowedCategoryIds.has(value.categoryId) && allowedCourseIds.has(value.courseId)
+      )
+    );
   } catch {}
   return {};
 }

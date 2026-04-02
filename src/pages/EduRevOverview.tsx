@@ -1029,11 +1029,7 @@ const EduRevOverview = () => {
   const completedCredits = completedRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
   const pendingCredits = pendingRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
 
-  let requiredMinOutClass = 0;
-  if (effectiveTier === "tier_50") requiredMinOutClass = Math.ceil(termTotalCredits * 0.4);
-  else if (effectiveTier === "tier_30") requiredMinOutClass = Math.ceil(termTotalCredits * 0.3);
-  else if (effectiveTier === "tier_20") requiredMinOutClass = Math.ceil(termTotalCredits * 0.2);
-  else requiredMinOutClass = Math.ceil(termTotalCredits * 0.1);
+  const requiredMinOutClass = Math.ceil(inClassRequiredCredits * 0.5);
 
   const pendingButNotSubmitted = Math.max(0, outClassCommittedCredits - completedCredits - pendingCredits);
   const completedPct = termTotalCredits > 0 ? (completedCredits / termTotalCredits) * 100 : 0;
@@ -1781,51 +1777,50 @@ const EduRevOverview = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-                        <div className="flex items-start gap-2.5">
-                          <Target className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-semibold text-amber-900">
-                              Track Requirement: {effectiveTier ? tierLabelMap[effectiveTier] : "EduRev Track"}
-                            </p>
-                            <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                              You must successfully complete a minimum of <strong className="text-amber-900 bg-amber-200/50 px-1 rounded">{requiredMinOutClass} out-class credits</strong> this semester to remain in your selected track. Failure to meet this requirement may result in being downgraded to a lower track or removed.
+                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <p className="text-sm font-semibold text-emerald-800">Completed</p>
+                            <p className="text-xs font-semibold text-emerald-700">
+                              {completedRows.length} items • {completedCredits} credits
                             </p>
                           </div>
+
+                          {completedRows.length > 0 ? (
+                            <ul className="space-y-1.5">
+                              {completedRows.map((row) => (
+                                <li key={`completed-${row.category}-${row.courseCode}-${row.initiativeId}`} className="text-xs text-emerald-800">
+                                  • {row.initiativeTitle} ({row.courseCode})
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-emerald-700/80">No faculty-verified completed items yet.</p>
+                          )}
                         </div>
 
-                        <div className="mt-5 pt-4 border-t border-amber-200/50">
-                          <div className="flex items-center justify-between text-xs mb-8 font-semibold">
-                            <span className="text-amber-900">Out-Class Progress vs Target</span>
-                            <span className="text-amber-700">{completedCredits} / {requiredMinOutClass} Verified Credits</span>
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <p className="text-sm font-semibold text-amber-800">Needs to be done</p>
+                            <p className="text-xs font-semibold text-amber-700">
+                              {pendingRows.length} items • {pendingCredits} credits
+                            </p>
                           </div>
-                          
-                          <div className="relative h-3 w-full bg-slate-200/80 rounded-full flex mb-4 shadow-inner">
-                            <div className="h-full bg-emerald-500 rounded-l-full transition-all" style={{ width: `${completedPct}%` }} title={`Completed: ${completedCredits}`} />
-                            <div className="h-full bg-blue-400 transition-all" style={{ width: `${pendingPct}%` }} title={`Pending Verification: ${pendingCredits}`} />
-                            <div className="h-full bg-amber-400/90 transition-all" style={{ width: `${unsubmittedPct}%` }} title={`Draft / Unsubmitted: ${pendingButNotSubmitted}`} />
-                            
-                            {minRequiredPct > 0 && (
-                              <div 
-                                className="absolute top-0 bottom-0 w-[3px] bg-rose-600 z-10 shadow-[0_0_4px_rgba(225,29,72,0.8)]" 
-                                style={{ left: `${minRequiredPct}%` }} 
-                                title={`Minimum Required: ${requiredMinOutClass}`}
-                              >
-                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-rose-600 whitespace-nowrap">
-                                  Target ({requiredMinOutClass})
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-amber-800 font-medium">
-                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 shadow-sm"></div>Completed ({completedCredits})</div>
-                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400 shadow-sm"></div>Pending Review ({pendingCredits})</div>
-                            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-amber-400/90 shadow-sm"></div>Draft/Selected ({pendingButNotSubmitted})</div>
-                            <div className="flex items-center gap-1.5"><div className="w-[3px] h-3 bg-rose-600 rounded-[1px] shadow-sm"></div>Track Minimum ({requiredMinOutClass})</div>
-                          </div>
+
+                          {pendingRows.length > 0 ? (
+                            <ul className="space-y-1.5">
+                              {pendingRows.map((row) => (
+                                <li key={`pending-${row.category}-${row.courseCode}-${row.initiativeId}`} className="text-xs text-amber-800">
+                                  • {row.initiativeTitle} ({row.courseCode})
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-amber-700/80">All submitted initiatives are verified.</p>
+                          )}
                         </div>
                       </div>
+
                     </div>
 
                     <div className="rounded-lg border border-border bg-card p-4">
@@ -1889,49 +1884,52 @@ const EduRevOverview = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <p className="text-sm font-semibold text-emerald-800">Completed</p>
-                          <p className="text-xs font-semibold text-emerald-700">
-                            {completedRows.length} items • {completedCredits} credits
+                    <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+                      <div className="flex items-start gap-2.5">
+                        <Target className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-amber-900">
+                            Track Requirement: {effectiveTier ? tierLabelMap[effectiveTier] : "EduRev Track"}
+                          </p>
+                          <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                            You must successfully complete a minimum of <strong className="text-amber-900 bg-amber-200/50 px-1 rounded">{requiredMinOutClass} out-class credits</strong> this semester to remain in your selected track. Failure to meet this requirement may result in being downgraded to a lower track or removed.
                           </p>
                         </div>
-
-                        {completedRows.length > 0 ? (
-                          <ul className="space-y-1.5">
-                            {completedRows.map((row) => (
-                              <li key={`completed-${row.category}-${row.courseCode}-${row.initiativeId}`} className="text-xs text-emerald-800">
-                                • {row.initiativeTitle} ({row.courseCode})
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-xs text-emerald-700/80">No faculty-verified completed items yet.</p>
-                        )}
                       </div>
 
-                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <p className="text-sm font-semibold text-amber-800">Needs to be done</p>
-                          <p className="text-xs font-semibold text-amber-700">
-                            {pendingRows.length} items • {pendingCredits} credits
-                          </p>
+                      <div className="mt-5 pt-4 border-t border-amber-200/50">
+                        <div className="flex items-center justify-between text-xs mb-8 font-semibold">
+                          <span className="text-amber-900">Out-Class Progress vs Target</span>
+                          <span className="text-amber-700">{completedCredits} / {requiredMinOutClass} Verified Credits</span>
                         </div>
-
-                        {pendingRows.length > 0 ? (
-                          <ul className="space-y-1.5">
-                            {pendingRows.map((row) => (
-                              <li key={`pending-${row.category}-${row.courseCode}-${row.initiativeId}`} className="text-xs text-amber-800">
-                                • {row.initiativeTitle} ({row.courseCode})
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-xs text-amber-700/80">All submitted initiatives are verified.</p>
-                        )}
+                        
+                        <div className="relative h-3 w-full bg-slate-200/80 rounded-full flex mb-4 shadow-inner">
+                          <div className="h-full bg-emerald-500 rounded-l-full transition-all" style={{ width: `${completedPct}%` }} title={`Completed: ${completedCredits}`} />
+                          <div className="h-full bg-blue-400 transition-all" style={{ width: `${pendingPct}%` }} title={`Pending Verification: ${pendingCredits}`} />
+                          <div className="h-full bg-amber-400/90 transition-all" style={{ width: `${unsubmittedPct}%` }} title={`Draft / Unsubmitted: ${pendingButNotSubmitted}`} />
+                          
+                          {minRequiredPct > 0 && (
+                            <div 
+                              className="absolute top-0 bottom-0 w-[3px] bg-rose-600 z-10 shadow-[0_0_4px_rgba(225,29,72,0.8)]" 
+                              style={{ left: `${minRequiredPct}%` }} 
+                              title={`Minimum Required: ${requiredMinOutClass}`}
+                            >
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-rose-600 whitespace-nowrap">
+                                Target ({requiredMinOutClass})
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-amber-800 font-medium">
+                          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 shadow-sm"></div>Completed ({completedCredits})</div>
+                          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400 shadow-sm"></div>Pending Review ({pendingCredits})</div>
+                          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-amber-400/90 shadow-sm"></div>Draft/Selected ({pendingButNotSubmitted})</div>
+                          <div className="flex items-center gap-1.5"><div className="w-[3px] h-3 bg-rose-600 rounded-[1px] shadow-sm"></div>Track Minimum ({requiredMinOutClass})</div>
+                        </div>
                       </div>
                     </div>
+
                   </DialogContent>
                 </Dialog>
               </div>
@@ -1949,7 +1947,7 @@ const EduRevOverview = () => {
                     <h3 className="text-xl font-bold text-foreground">Track Requirements Overview</h3>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                    For Term {selectedTerm}, you need to complete all <span className="font-semibold text-foreground">{inClassRequiredCredits} in-class credits</span> and a minimum of <span className="font-semibold text-foreground bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">{requiredMinOutClass} out-class credits</span> to maintain your standing in the {effectiveTier ? tierLabelMap[effectiveTier] : 'selected'} track.
+                    For Term {selectedTerm}, you need to complete all <span className="font-semibold text-foreground">{inClassRequiredCredits} in-class credits</span> and a minimum of <span className="font-semibold text-foreground bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">{requiredMinOutClass} out-class minimum credits</span> to maintain your standing in the {effectiveTier ? tierLabelMap[effectiveTier] : 'selected'} track.
                   </p>
                 </div>
               </div>
@@ -2005,7 +2003,7 @@ const EduRevOverview = () => {
                               {completedCredits >= requiredMinOutClass ? 'On Track' : 'In Progress'}
                             </span>
                             <span className="text-sm font-bold text-foreground">
-                              {completedCredits} / {requiredMinOutClass} min
+                              {completedCredits} / {requiredMinOutClass} minimum credits
                             </span>
                           </div>
                         </div>
@@ -2016,7 +2014,7 @@ const EduRevOverview = () => {
                           />
                         </div>
                         <div className="flex justify-between items-center text-[11px] mt-1">
-                          <span className="text-muted-foreground">Progress towards minimum requirement</span>
+                          <span className="text-muted-foreground">Minimum credits are {Math.round(minRequiredPct)}% of total term credits</span>
                           <span className="font-bold text-foreground">{Math.min(100, Math.round((completedCredits / requiredMinOutClass) * 100) || 0)}%</span>
                         </div>
                       </div>

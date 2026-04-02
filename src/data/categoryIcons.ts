@@ -1,7 +1,6 @@
 import {
   Code2, Cpu, Calculator, Cloud, Puzzle, BookOpen,
-  Rocket, Heart, Leaf, Briefcase, GraduationCap, MessageSquare,
-  Brain, Compass,
+  Rocket, Heart,
 } from "lucide-react";
 
 export const categoryIcons: Record<string, typeof Code2> = {
@@ -13,10 +12,4 @@ export const categoryIcons: Record<string, typeof Code2> = {
   "cat-6":  BookOpen,       // Language Courses
   "cat-7":  Rocket,         // Capstone Project
   "cat-8":  Heart,          // Community Project
-  "cat-9":  Leaf,           // Engineering Science
-  "cat-10": Briefcase,      // Summer Training
-  "cat-11": GraduationCap,  // Department Elective
-  "cat-12": MessageSquare,  // Seminar
-  "cat-13": Brain,          // Aptitude Elective
-  "cat-14": Compass,        // Pathway Courses
 };

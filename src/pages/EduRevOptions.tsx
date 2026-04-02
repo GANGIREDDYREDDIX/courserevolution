@@ -141,62 +141,6 @@ const COURSE_INITIATIVE_CATALOG: Partial<Record<string, Partial<Record<EduRevOpt
       },
     ],
   },
-  CSE408: {
-    projects: [
-      {
-        id: "cse408-proj-1",
-        title: "Cloud Deployment Pipeline",
-        description: "Create CI/CD flow and deploy application to cloud infrastructure.",
-        provider: "Cloud Center",
-      },
-      {
-        id: "cse408-proj-2",
-        title: "Monitoring & Alerting Stack",
-        description: "Implement observability with logs, metrics, and alert policies.",
-        provider: "DevOps Lab",
-      },
-      {
-        id: "cse408-proj-3",
-        title: "Container Security Hardening",
-        description: "Apply security scanning and remediation workflow for container images.",
-        provider: "Security Practice Group",
-      },
-      {
-        id: "cse408-proj-4",
-        title: "Infra as Code Blueprint",
-        description: "Model complete environment setup using Terraform modules.",
-        provider: "Cloud Center",
-      },
-    ],
-    nptel_moocs: [
-      {
-        id: "cse408-cert-1",
-        title: "AWS Cloud Practitioner",
-        description: "Foundational cloud certification aligned to deployment concepts.",
-        provider: "AWS",
-      },
-      {
-        id: "cse408-cert-2",
-        title: "Azure Fundamentals AZ-900",
-        description: "Cloud fundamentals and service-model understanding.",
-        provider: "Microsoft",
-      },
-    ],
-    internship: [
-      {
-        id: "cse408-int-1",
-        title: "Cloud Ops Internship",
-        description: "Support deployment operations and incident workflows.",
-        provider: "Partner Startup",
-      },
-      {
-        id: "cse408-int-2",
-        title: "DevOps Internship",
-        description: "Own CI/CD setup and release automation pipeline.",
-        provider: "Industry Partner",
-      },
-    ],
-  },
 };
 
 const DEFAULT_OPTION_INITIATIVES: Record<EduRevOptionType, InitiativeItem[]> = {
