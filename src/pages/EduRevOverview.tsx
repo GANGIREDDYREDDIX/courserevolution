@@ -39,6 +39,7 @@ import {
 import type { EduRevPathwayId, EduRevTierId } from "@/context/StudentContext";
 
 const PROFILE_STORAGE_KEY = "course-navigator-profile-inputs";
+const MIN_OUT_CLASS_RATIO = 0.5;
 
 const loadSavedProfileInputs = () => {
   try {
@@ -1058,7 +1059,7 @@ const EduRevOverview = () => {
       return sum + Math.min(credits, maxForCourse);
     }, 0)
   );
-  const inClassRequiredCredits = Math.max(termTotalCredits - outClassCommittedCredits, 0);
+  const inClassRequiredCredits = termTotalCredits;
 
   const trackerRows = Object.entries(submittedInitiatives).flatMap(([categoryCourseKey, initiativeIds]) => {
     const [category, courseCode] = categoryCourseKey.split("::");
@@ -1085,7 +1086,7 @@ const EduRevOverview = () => {
   const completedCredits = completedRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
   const pendingCredits = pendingRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
 
-  const requiredMinOutClass = Math.ceil(inClassRequiredCredits * 0.5);
+  const requiredMinOutClass = Math.ceil(inClassRequiredCredits * MIN_OUT_CLASS_RATIO);
 
   const pendingButNotSubmitted = Math.max(0, outClassCommittedCredits - completedCredits - pendingCredits);
   const completedPct = termTotalCredits > 0 ? (completedCredits / termTotalCredits) * 100 : 0;
