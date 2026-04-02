@@ -12,7 +12,7 @@ export interface Student {
   marks: number;
 }
 
-export type DemoStudentProfileId = "eligible_all" | "eligible_some" | "non_eligible";
+export type DemoStudentProfileId = "eligible_all" | "eligible_some" | "non_eligible" | "showcase_demo";
 
 export const demoStudents: Record<DemoStudentProfileId, Student> = {
   eligible_all: {
@@ -54,6 +54,19 @@ export const demoStudents: Record<DemoStudentProfileId, Student> = {
     cgpa: 6.7,
     marks: 64,
   },
+  showcase_demo: {
+    id: "STU-2024-2001",
+    name: "Ananya Sharma",
+    firstName: "Ananya",
+    school: "School of Computer Science & Engineering",
+    program: "B.Tech CSE — Cloud Computing / Engineering Minor (P132)",
+    year: 4,
+    term: 1,
+    enrollmentId: "CSE/2022/2001",
+    avatarUrl: "https://api.dicebear.com/7.x/initials/svg?seed=AnanyaSharma&backgroundColor=0ea5e9&textColor=ffffff",
+    cgpa: 8.9,
+    marks: 88,
+  },
 };
 
 export const mockStudent: Student = demoStudents.eligible_some;
@@ -63,7 +76,7 @@ export const getDemoStudentByProfile = (profileId: DemoStudentProfileId): Studen
 };
 
 export const isValidDemoStudentProfile = (value: string): value is DemoStudentProfileId => {
-  return value === "eligible_all" || value === "eligible_some" || value === "non_eligible";
+  return value === "eligible_all" || value === "eligible_some" || value === "non_eligible" || value === "showcase_demo";
 };
 
 export const getDemoStudentOptions = () => {
@@ -88,6 +101,13 @@ export const getDemoStudentOptions = () => {
       subtitle: "Foundation flow eligible",
       cgpa: demoStudents.non_eligible.cgpa,
       marks: demoStudents.non_eligible.marks,
+    },
+    {
+      id: "showcase_demo" as const,
+      title: "Showcase Demo Student",
+      subtitle: "Pre-filled progress with faculty-approved outcomes",
+      cgpa: demoStudents.showcase_demo.cgpa,
+      marks: demoStudents.showcase_demo.marks,
     },
   ];
 };

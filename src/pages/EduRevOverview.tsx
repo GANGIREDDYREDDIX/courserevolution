@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useStudent } from "@/context/StudentContext";
@@ -584,6 +584,7 @@ const EduRevOverview = () => {
   const {
     categories,
     selections,
+    selectedDemoProfileId,
     areAllCategoriesSelected,
     getUnselectedCategoryNames,
     hasJoinedEduRev,
@@ -613,6 +614,7 @@ const EduRevOverview = () => {
   const [profileInputs, setProfileInputs] = useState(loadSavedProfileInputs);
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [showPieChart, setShowPieChart] = useState(false);
+  const [demoFacultyVerifiedInitiatives, setDemoFacultyVerifiedInitiatives] = useState<Record<string, string[]>>({});
 
   const updateProfileInput = (key: "github" | "portfolio" | "cvFileName", value: string) => {
     const next = { ...profileInputs, [key]: value };
@@ -853,6 +855,60 @@ const EduRevOverview = () => {
     );
   };
 
+  useEffect(() => {
+    if (selectedDemoProfileId !== "showcase_demo") {
+      if (Object.keys(demoFacultyVerifiedInitiatives).length > 0) {
+        setDemoFacultyVerifiedInitiatives({});
+      }
+      return;
+    }
+
+    if (Object.keys(submittedInitiatives).length > 0 || activeTermSelectedCourses.length === 0) {
+      return;
+    }
+
+    const categoryOrder: OutClassCategoryType[] = ["Projects", "Certifications", "Internship"];
+    const nextSubmitted: Record<string, string[]> = {};
+    const nextVerified: Record<string, string[]> = {};
+    const nextProofs: Record<string, { fileName: string; uploadedAt: string }> = {};
+    const now = new Date().toLocaleString();
+
+    activeTermSelectedCourses.slice(0, 3).forEach((course, index) => {
+      const category = categoryOrder[index % categoryOrder.length];
+      const key = `${category}::${course.courseCode}`;
+      const initiatives = getInitiativesForCourseAndCategory(course.courseCode, category);
+      const picked = initiatives.slice(0, 2).map((item) => item.id);
+
+      if (picked.length === 0) return;
+
+      nextSubmitted[key] = picked;
+      nextVerified[key] = picked.slice(0, 1);
+
+      picked.forEach((initiativeId) => {
+        nextProofs[`${key}::${initiativeId}`] = {
+          fileName: `${course.courseCode}-${initiativeId}-proof.pdf`,
+          uploadedAt: now,
+        };
+      });
+    });
+
+    if (Object.keys(nextSubmitted).length === 0) return;
+
+    setSubmittedInitiatives(nextSubmitted);
+    setDemoFacultyVerifiedInitiatives(nextVerified);
+    setProofUploads(nextProofs);
+  }, [
+    activeTermSelectedCourses,
+    demoFacultyVerifiedInitiatives,
+    selectedDemoProfileId,
+    submittedInitiatives,
+  ]);
+
+  const effectiveFacultyVerifiedInitiatives = useMemo(
+    () => ({ ...facultyVerifiedInitiatives, ...demoFacultyVerifiedInitiatives }),
+    [demoFacultyVerifiedInitiatives]
+  );
+
   const getInitiativeCredits = (initiative: FacultyInitiative | undefined, category: OutClassCategoryType) => {
     if (!initiative) return category === "Projects" || category === "Internship" ? 2 : 1;
     if (typeof initiative.credits === "number") return initiative.credits;
@@ -1018,7 +1074,7 @@ const EduRevOverview = () => {
         initiativeId,
         initiativeTitle: initiative?.title || initiativeId,
         initiativeCredits: getInitiativeCredits(initiative, categoryType),
-        verified: (facultyVerifiedInitiatives[categoryCourseKey] || []).includes(initiativeId),
+        verified: (effectiveFacultyVerifiedInitiatives[categoryCourseKey] || []).includes(initiativeId),
         proof: proofUploads[`${categoryCourseKey}::${initiativeId}`],
       };
     });
@@ -1480,7 +1536,7 @@ const EduRevOverview = () => {
                               const key = getCourseCategoryKey(activeOutClassCategory, activeOutClassCourseCode);
                               const isPicked = (selectedInitiatives[key] || []).includes(initiative.id);
                               const isSubmitted = (submittedInitiatives[key] || []).includes(initiative.id);
-                              const isDone = (facultyVerifiedInitiatives[key] || []).includes(initiative.id);
+                              const isDone = (effectiveFacultyVerifiedInitiatives[key] || []).includes(initiative.id);
 
                               return (
                                 <div key={initiative.id} className="rounded-lg border border-border bg-card p-3">

@@ -155,6 +155,28 @@ function loadEduRevTier(): EduRevTierId | null {
   return null;
 }
 
+function buildShowcaseSelections(): Record<string, CategorySelection> {
+  const seed: Record<string, CategorySelection> = {};
+
+  for (const category of mockCategories) {
+    if (!category.isElective) {
+      seed[category.id] = {
+        selectedCourseIds: category.courses.map((course) => course.id),
+        status: "draft",
+      };
+      continue;
+    }
+
+    const firstCourseId = category.courses[0]?.id;
+    seed[category.id] = {
+      selectedCourseIds: firstCourseId ? [firstCourseId] : [],
+      status: firstCourseId ? "draft" : "not_started",
+    };
+  }
+
+  return normalizeSelections(seed);
+}
+
 export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedDemoProfileId, setSelectedDemoProfileId] = useState<DemoStudentProfileId | null>(loadDemoProfile);
   const [student, setStudent] = useState<Student>(() => {
@@ -206,11 +228,11 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setStudent(nextStudent);
     if (isSwitchingProfile) {
       // Start a fresh flow only when switching to a different demo profile.
-      setSelections(normalizeSelections({}));
+      setSelections(profileId === "showcase_demo" ? buildShowcaseSelections() : normalizeSelections({}));
       setEduRevSelections({});
-      setHasJoinedEduRev(false);
-      setSelectedEduRevPathway(null);
-      setSelectedEduRevTier(null);
+      setHasJoinedEduRev(profileId === "showcase_demo");
+      setSelectedEduRevPathway(profileId === "showcase_demo" ? "placements" : null);
+      setSelectedEduRevTier(profileId === "showcase_demo" ? "tier_50" : null);
     }
     localStorage.setItem(DEMO_PROFILE_STORAGE_KEY, profileId);
     localStorage.setItem(
