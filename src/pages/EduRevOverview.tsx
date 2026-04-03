@@ -1093,6 +1093,9 @@ const EduRevOverview = () => {
   const pendingPct = termTotalCredits > 0 ? (pendingCredits / termTotalCredits) * 100 : 0;
   const unsubmittedPct = termTotalCredits > 0 ? (pendingButNotSubmitted / termTotalCredits) * 100 : 0;
   const minRequiredPct = termTotalCredits > 0 ? (requiredMinOutClass / termTotalCredits) * 100 : 0;
+  const outClassTargetProgressPct = requiredMinOutClass > 0
+    ? Math.min(100, (outClassCommittedCredits / requiredMinOutClass) * 100)
+    : 0;
 
   const curriculumRows = selectedCourses
     .slice()
@@ -1382,11 +1385,16 @@ const EduRevOverview = () => {
 
                 {showOutClassSection && (
                   <div className="mt-5 animate-fade-in">
-                    <div className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100/30 px-3 py-2 text-sm">
-                      <span className="font-semibold text-emerald-700">Out-Class Credits Committed:</span>
-                      <span className="inline-flex h-6 items-center justify-center rounded-md bg-emerald-100 px-2 font-bold text-emerald-800">
-                        {outClassCommittedCredits}
-                      </span>
+                    <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-100/30 px-3 py-2">
+                      <div className="inline-flex flex-wrap items-center gap-2 text-sm">
+                        <span className="font-semibold text-emerald-700">Out-Class Credits Committed:</span>
+                        <span className="inline-flex h-6 items-center justify-center rounded-md bg-emerald-100 px-2 font-bold text-emerald-800">
+                          {outClassCommittedCredits}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs font-medium text-emerald-800">
+                        Note: Minimum <span className="font-bold">{requiredMinOutClass} credits</span> is mandatory this term (50% rule).
+                      </p>
                     </div>
                     {effectivePathway && (
                       <div className="mb-4 space-y-1">
@@ -1819,7 +1827,7 @@ const EduRevOverview = () => {
                     </div>
 
                     <div className="rounded-lg border border-border bg-secondary/20 p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="rounded-lg border border-border bg-card p-3">
                           <p className="text-xs text-muted-foreground">Total Credits (Term)</p>
                           <p className="text-xl font-bold text-foreground">{termTotalCredits}</p>
@@ -1827,6 +1835,21 @@ const EduRevOverview = () => {
                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                           <p className="text-xs text-emerald-700">Out-Class Committed Credits</p>
                           <p className="text-xl font-bold text-emerald-700">{outClassCommittedCredits}</p>
+                        </div>
+                        <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+                          <p className="text-xs text-indigo-700">Target (50% rule)</p>
+                          <p className="text-xl font-bold text-indigo-700">{requiredMinOutClass}</p>
+                          <div className="mt-2">
+                            <div className="h-1.5 w-full rounded-full bg-indigo-100/90 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-indigo-500 transition-all"
+                                style={{ width: `${outClassTargetProgressPct}%` }}
+                              />
+                            </div>
+                            <p className="mt-1 text-[10px] text-indigo-700/90 font-medium">
+                              {outClassCommittedCredits} / {requiredMinOutClass} towards target
+                            </p>
+                          </div>
                         </div>
                         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                           <p className="text-xs text-blue-700">In-Class Required Credits</p>
@@ -1967,11 +1990,11 @@ const EduRevOverview = () => {
                           
                           {minRequiredPct > 0 && (
                             <div 
-                              className="absolute top-0 bottom-0 w-[3px] bg-rose-600 z-10 shadow-[0_0_4px_rgba(225,29,72,0.8)]" 
+                              className="absolute top-0 bottom-0 w-[3px] bg-indigo-600 z-10 shadow-[0_0_4px_rgba(79,70,229,0.55)]" 
                               style={{ left: `${minRequiredPct}%` }} 
                               title={`Minimum Required: ${requiredMinOutClass}`}
                             >
-                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-rose-600 whitespace-nowrap">
+                              <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-indigo-600 whitespace-nowrap">
                                 Target ({requiredMinOutClass})
                               </div>
                             </div>
@@ -1982,7 +2005,7 @@ const EduRevOverview = () => {
                           <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 shadow-sm"></div>Completed ({completedCredits})</div>
                           <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400 shadow-sm"></div>Pending Review ({pendingCredits})</div>
                           <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-amber-400/90 shadow-sm"></div>Draft/Selected ({pendingButNotSubmitted})</div>
-                          <div className="flex items-center gap-1.5"><div className="w-[3px] h-3 bg-rose-600 rounded-[1px] shadow-sm"></div>Track Minimum ({requiredMinOutClass})</div>
+                          <div className="flex items-center gap-1.5"><div className="w-[3px] h-3 bg-indigo-600 rounded-[1px] shadow-sm"></div>Track Minimum ({requiredMinOutClass})</div>
                         </div>
                       </div>
                     </div>
