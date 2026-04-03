@@ -638,7 +638,7 @@ const EduRevPathway = () => {
         </button>
 
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2">
-          Learning by Doing
+          EDU-Revolution: Learning by Doing
         </h1>
         <p className="text-base md:text-lg text-muted-foreground">
           Select the pathway that best aligns with your career goals and aspirations.

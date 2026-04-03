@@ -1059,7 +1059,7 @@ const EduRevOverview = () => {
       return sum + Math.min(credits, maxForCourse);
     }, 0)
   );
-  const inClassRequiredCredits = termTotalCredits;
+  const inClassRequiredCredits = termTotalCredits - outClassCommittedCredits;
 
   const trackerRows = Object.entries(submittedInitiatives).flatMap(([categoryCourseKey, initiativeIds]) => {
     const [category, courseCode] = categoryCourseKey.split("::");
@@ -1086,7 +1086,7 @@ const EduRevOverview = () => {
   const completedCredits = completedRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
   const pendingCredits = pendingRows.reduce((sum, row) => sum + row.initiativeCredits, 0);
 
-  const requiredMinOutClass = Math.ceil(inClassRequiredCredits * MIN_OUT_CLASS_RATIO);
+  const requiredMinOutClass = Math.ceil(termTotalCredits * MIN_OUT_CLASS_RATIO);
 
   const pendingButNotSubmitted = Math.max(0, outClassCommittedCredits - completedCredits - pendingCredits);
   const completedPct = termTotalCredits > 0 ? (completedCredits / termTotalCredits) * 100 : 0;
@@ -1949,7 +1949,7 @@ const EduRevOverview = () => {
                             Track Requirement: {effectiveTier ? tierLabelMap[effectiveTier] : "EduRev Track"}
                           </p>
                           <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                            You must successfully complete a minimum of <strong className="text-amber-900 bg-amber-200/50 px-1 rounded">{requiredMinOutClass} out-class credits</strong> this semester to remain in your selected track. Failure to meet this requirement may result in being downgraded to a lower track or removed.
+                            For Term {selectedTerm}, you need to complete all <strong className="text-amber-900 bg-amber-200/50 px-1 rounded">{termTotalCredits} credits</strong> out of which minimum <strong className="text-amber-900 bg-amber-200/50 px-1 rounded">{requiredMinOutClass} credits</strong> must be earned outside the classroom activity to maintain your standing in the {effectiveTier ? tierLabelMap[effectiveTier] : "selected track"}.
                           </p>
                         </div>
                       </div>
@@ -2004,7 +2004,7 @@ const EduRevOverview = () => {
                     <h3 className="text-xl font-bold text-foreground">Track Requirements Overview</h3>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                    For Term {selectedTerm}, you need to complete all <span className="font-semibold text-foreground">{inClassRequiredCredits} in-class credits</span> and a minimum of <span className="font-semibold text-foreground bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">{requiredMinOutClass} out-class minimum credits</span> to maintain your standing in the {effectiveTier ? tierLabelMap[effectiveTier] : 'selected'} track.
+                    For Term {selectedTerm}, you need to complete all <span className="font-semibold text-foreground">{termTotalCredits} credits</span> out of which minimum <span className="font-semibold text-foreground bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">{requiredMinOutClass} credits</span> must be earned outside the classroom activity to maintain your standing in the {effectiveTier ? tierLabelMap[effectiveTier] : "selected track"}.
                   </p>
                 </div>
               </div>
